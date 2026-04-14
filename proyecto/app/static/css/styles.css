@@ -1,6 +1,15 @@
 body {
+    margin: 0;
     text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+}
 
+h1{
+    font-size: 40px;
+}
+
+h4{
+    font-size: 25px;
 }
 
 form {
@@ -14,7 +23,7 @@ form {
     padding: 20px;
     background-color: #f0f0f0;
     width: 80%;
-    margin: 0 auto;
+    margin: 0 auto 30px auto;
 }
 
 form div {
@@ -28,16 +37,30 @@ form div {
 form div p {
     margin: 10px 0px;
     font-weight: bold;
+    font-size: 18px;
+}
+
+textarea, input, select, .subir_archivo{
+    padding: 10px 0px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
 }
 
 .duda {
     flex-direction: column;
 }
 
+.duda .subir_archivo{
+    margin: 5px 0px;
+    border: none;
+}
+
 form button{
     padding: 5px 40px;
-    font-size: 16px;
-    background-color: #4CAF50;
+    font-size: 18px;
+    background-color: rgb(0, 89, 255);
     color: white;
     border: none;
     border-radius: 5px;
