@@ -11,14 +11,13 @@ def index(request):
 def crear_ticket(request):
     if request.method == "POST":
         try:
-            data = json.loads(request.body)
-
             ticket = Ticket.objects.create(
-                nombre=data.get("nombre"),
-                nombre_empresa=data.get("nombre_empresa"),
-                tipo_dispositivo=data.get("tipo_dispositivo"),
-                id_dispositivo=data.get("id_dispositivo"),
-                duda=data.get("duda")
+                nombre=request.POST.get("nombre"),
+                nombre_empresa=request.POST.get("nombre_empresa"),
+                tipo_dispositivo=request.POST.get("tipo_dispositivo"),
+                id_dispositivo=request.POST.get("id_dispositivo"),
+                duda=request.POST.get("duda"),
+                archivo=request.FILES.get("archivo")
             )
 
             return JsonResponse({

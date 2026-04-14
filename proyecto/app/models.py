@@ -19,4 +19,5 @@ class Ticket(models.Model):
     )
     id_dispositivo = models.CharField(max_length=100)
     duda = models.TextField()
+    archivo = models.FileField(upload_to='tickets/', blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
