@@ -1,0 +1,89 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Tickets</title>
+    <link rel="stylesheet" href="{%static 'styles.css' %}">
+
+</head>
+
+
+<body>
+
+    <h1>Tickets</h1>
+    <h4>Rellene el formulario</h4>
+
+
+    <form method="POST" action="#">
+
+        <div class="nombre">
+            <p>Nombre:</p>
+            <input type="text" name="nombre" required>
+        </div>
+
+        <div class="nombre_empresa">
+            <p>Nombre empresa:</p>
+            <input type="text" name="nombre_empresa" required>
+        </div>
+
+        <div class="tipo_dispositivo">
+            <p>Tipo de dispositivo:</p>
+            <select name="tipo_dispositivo" required>
+                <option value="maquina">Máquina</option>
+                <option value="tracker">Tracker</option>
+                <option value="otro">Otro</option>
+            </select>
+        </div>
+
+        <div class="id_dispositivo">
+            <p>ID dispositivo:</p>
+            <input type="text" name="id_dispositivo" required>
+        </div>
+
+        <div class="duda">
+            <p>Duda:</p>
+            <textarea name="duda" rows="4" required></textarea>
+            <!-- Subir archivo -->
+            <input type="file" name="archivo">
+
+        </div>
+
+
+
+        <button type="submit">Enviar Ticket</button>
+    </form>
+
+    <script>
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            fetch('/tickets/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                alert('Ticket creado: ' + JSON.stringify(data));
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Error al crear ticket');
+            });
+        });
+    </script>
+
+</body>
+
+</html>
