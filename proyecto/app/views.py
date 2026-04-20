@@ -35,3 +35,30 @@ def crear_ticket(request):
     return JsonResponse({
         "message": "Método no permitido"
     }, status=405)
+
+
+@csrf_exempt
+def subir_ticket(request):
+    if request.method == "POST":
+        try:
+            # IMPORTANTE: Leer el JSON enviado desde Android
+            datos = json.loads(request.body)
+            
+            ticket = Ticket.objects.create(
+                nombre=datos.get("nombre"),
+                nombre_empresa=datos.get("nombre_empresa"),
+                tipo_dispositivo=datos.get("tipo_dispositivo"),
+                id_dispositivo=datos.get("id_dispositivo"),
+                duda=datos.get("duda")
+            )
+
+            return JsonResponse({
+                "success": True,
+                "message": "Ticket creado correctamente",
+                "id": ticket.id
+            }, status=201)
+
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+    return JsonResponse({"message": "Método no permitido"}, status=405)
