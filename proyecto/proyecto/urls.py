@@ -24,6 +24,7 @@ urlpatterns = [
     path('', views.index),
     path('admin/', admin.site.urls),
     path("tickets/", views.crear_ticket),
+    path("tickets_android/", views.subir_ticket),
 ]
 
 if settings.DEBUG:
