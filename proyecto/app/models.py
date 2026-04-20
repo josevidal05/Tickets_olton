@@ -4,8 +4,8 @@ from django.db import models
 
 class Ticket(models.Model):
 
-    nombre = models.CharField(max_length=100)
-    nombre_empresa = models.CharField(max_length=150)
+    empresa = models.CharField(max_length=150)
+    contacto = models.CharField(max_length=100)
 
     TIPO_DISPOSITIVO_CHOICES = [
         ('maquina', 'Máquina'),
@@ -17,7 +17,18 @@ class Ticket(models.Model):
         max_length=20,
         choices=TIPO_DISPOSITIVO_CHOICES
     )
-    id_dispositivo = models.CharField(max_length=100)
-    duda = models.TextField()
+    id_dispositivo = models.IntegerField()
+    observaciones = models.TextField()
     archivo = models.FileField(upload_to='tickets/', blank=True, null=True)
+
+    TIPO_PORTES_CHOICES = [
+        ('pagado', 'Pagado'),
+        ('debido', 'Debido'),
+    ]
+
+    portes = models.CharField(
+        max_length=20,
+        choices=TIPO_PORTES_CHOICES
+    )
+    empresa_transporte = models.TextField()
     fecha_creacion = models.DateTimeField(auto_now_add=True)
