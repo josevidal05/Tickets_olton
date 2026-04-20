@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">tickets_android</string>
+    <string name="title_tickets">Tickets</string>
+    <string name="subtitle_form">Rellene el formulario</string>
+    <string name="label_nombre">Contacto:</string>
+    <string name="label_nombre_empresa">Empresa:</string>
+    <string name="label_tipo_dispositivo">Tipo de dispositivo:</string>
+    <string name="label_id_dispositivo">ID dispositivo:</string>
+    <string name="label_duda">Observaciones:</string>
+    <string name="btn_seleccionar_archivo">Seleccionar archivo</string>
+    <string name="no_file_selected">Ningún archivo seleccionado</string>
+    <string name="btn_enviar_ticket">Enviar Ticket</string>
+
+    <string-array name="dispositivos_array">
+        <item>Máquina</item>
+        <item>Tracker</item>
+        <item>Otro</item>
+    </string-array>
+</resources>
