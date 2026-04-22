@@ -7,6 +7,10 @@
     <string name="label_tipo_dispositivo">Tipo de dispositivo:</string>
     <string name="label_id_dispositivo">ID dispositivo:</string>
     <string name="label_duda">Observaciones:</string>
+    <string name="label_portes">Portes:</string>
+    <string name="label_transportes">Empresa transporte:</string>
+
+
     <string name="btn_seleccionar_archivo">Seleccionar archivo</string>
     <string name="no_file_selected">Ningún archivo seleccionado</string>
     <string name="btn_enviar_ticket">Enviar Ticket</string>
@@ -15,5 +19,10 @@
         <item>Máquina</item>
         <item>Tracker</item>
         <item>Otro</item>
+    </string-array>
+
+    <string-array name="portes_array">
+        <item>Debido</item>
+        <item>Pagado</item>
     </string-array>
 </resources>
