@@ -12,11 +12,13 @@ def crear_ticket(request):
     if request.method == "POST":
         try:
             ticket = Ticket.objects.create(
-                nombre=request.POST.get("nombre"),
-                nombre_empresa=request.POST.get("nombre_empresa"),
+                empresa=request.POST.get("empresa"),
+                contacto=request.POST.get("contacto"),
                 tipo_dispositivo=request.POST.get("tipo_dispositivo"),
                 id_dispositivo=request.POST.get("id_dispositivo"),
-                duda=request.POST.get("duda"),
+                observaciones=request.POST.get("observaciones"),
+                portes=request.POST.get("portes"),
+                empresa_transporte=request.POST.get("transporte"),
                 archivo=request.FILES.get("archivo")
             )
 
@@ -25,7 +27,7 @@ def crear_ticket(request):
                 "message": "Ticket creado correctamente",
                 "id": ticket.id
             }, status=201)
-
+ 
         except Exception as e:
             return JsonResponse({
                 "success": False,
@@ -41,24 +43,18 @@ def crear_ticket(request):
 def subir_ticket(request):
     if request.method == "POST":
         try:
-            # IMPORTANTE: Leer el JSON enviado desde Android
-            datos = json.loads(request.body)
-            
+            # Los textos ahora vienen en request.POST (no en un JSON)
+            # El archivo viene en request.FILES
             ticket = Ticket.objects.create(
-                nombre=datos.get("nombre"),
-                nombre_empresa=datos.get("nombre_empresa"),
-                tipo_dispositivo=datos.get("tipo_dispositivo"),
-                id_dispositivo=datos.get("id_dispositivo"),
-                duda=datos.get("duda")
+                empresa=request.POST.get("empresa"),
+                contacto=request.POST.get("contacto"),
+                tipo_dispositivo=request.POST.get("tipo_dispositivo"),
+                id_dispositivo=request.POST.get("id_dispositivo"),
+                observaciones=request.POST.get("observaciones"),
+                portes=request.POST.get("portes"),
+                empresa_transporte=request.POST.get("transporte"),
+                archivo=request.FILES.get("archivo") # Guarda el archivo real
             )
-
-            return JsonResponse({
-                "success": True,
-                "message": "Ticket creado correctamente",
-                "id": ticket.id
-            }, status=201)
-
+            return JsonResponse({"success": True}, status=201)
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=400)
-
-    return JsonResponse({"message": "Método no permitido"}, status=405)

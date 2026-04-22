@@ -16,19 +16,23 @@
 
 <body>
 
-    <h1>Tickets</h1>
-    <h4>Rellene el formulario</h4>
+    <div class="cabecera">
+        <h1>Tickets</h1>
+        <h4>Rellene el formulario</h4>
+    </div>
+
+
 
     <form method="POST" action="#">
 
-        <div class="nombre">
-            <p>Nombre:</p>
-            <input type="text" name="nombre" required>
+        <div class="empresa">
+            <p>Empresa:</p>
+            <input type="text" name="empresa" required>
         </div>
 
-        <div class="nombre_empresa">
-            <p>Nombre empresa:</p>
-            <input type="text" name="nombre_empresa" required>
+        <div class="contacto">
+            <p>Contacto:</p>
+            <input type="text" name="contacto" required>
         </div>
 
         <div class="tipo_dispositivo">
@@ -42,30 +46,52 @@
 
         <div class="id_dispositivo">
             <p>ID dispositivo:</p>
-            <input type="text" name="id_dispositivo" required>
+            <input type="number" name="id_dispositivo" required>
         </div>
 
-        <div class="duda">
-            <p>Duda:</p>
-            <textarea name="duda" rows="4" required></textarea>
+        <div class="observaciones">
+            <p>Observaciones:</p>
+            <textarea name="observaciones" rows="4" required></textarea>
             <!-- Subir archivo -->
-            <input type="file" class="subir_archivo" name="archivo">
+            <input type="file" class="subir_archivo" name="archivo" accept="image/*">
 
         </div>
 
+        <div class="portes">
+            <p>Portes:</p>
+            <select name="portes" required>
+                <option value="debido">Debido</option>
+                <option value="pagado">Pagado</option>
+            </select>
+        </div>
 
+        <div class="transporte">
+            <p>Empresa de transporte:</p>
+            <input type="text" name="transporte" required>
+        </div>
 
         <button type="submit">Enviar Ticket</button>
     </form>
 
     <script>
-        document.querySelector('form').addEventListener('submit', function(e) {
+        document.querySelector('form').addEventListener('submit', function (e) {
             e.preventDefault();
+            const fileInput = document.querySelector('input[name="archivo"]');
+            const file = fileInput.files[0];
+            if (file) {
+                const extension = file.name.split('.').pop().toLowerCase();
+                const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+                if (!allowedExtensions.includes(extension)) {
+                    alert('Formato de archivo inválido');
+                    return;
+                }
+            }
             const formData = new FormData(this);
             fetch('/tickets/', {
                 method: 'POST',
                 body: formData
             })
+            
             .then(response => {
                 if (!response.ok) {
                     throw new Error('HTTP ' + response.status + ': ' + response.statusText);
