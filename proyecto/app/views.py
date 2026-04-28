@@ -7,6 +7,12 @@ from .models import Ticket
 def index(request):
     return render(request, 'index.html')
 
+def comprobar_tickets(request):
+    return render(request, 'comprobar_tickets.html')
+
+def login(request):
+    return render(request, 'login.html')
+
 @csrf_exempt
 def crear_ticket(request):
     if request.method == "POST":
@@ -23,8 +29,7 @@ def crear_ticket(request):
             )
 
             return JsonResponse({
-                "success": True,
-                "message": "Ticket creado correctamente",
+                "estado": "Ticket creado correctamente",
                 "id": ticket.id
             }, status=201)
  
