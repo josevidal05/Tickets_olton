@@ -22,9 +22,8 @@ body {
 
 .user_cabecera{
     color: white;
-    font-size: 30px;
-    width: 30px;
-    height: 30px;
+    width: 25px;
+    height: 25px;
 }
 
 h1{
@@ -94,5 +93,6 @@ form button{
     border-radius: 5px;
     cursor: pointer;
     width: 100%;
+    margin-top: 20px;
 }
 
