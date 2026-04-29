@@ -12,7 +12,7 @@ def validate_image_file(value):
     if not mime_type or not mime_type.startswith('image/'):
         raise ValidationError('Solo se permiten archivos de imagen.')
 
-#class User(models.Model):
+
 
 class Ticket(models.Model):
 
@@ -53,3 +53,16 @@ class Ticket(models.Model):
 
            
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+
+class User(models.Model):
+    username = models.CharField(max_length = 50, unique=True)
+    password = models.CharField(max_length = 155)
+    nombre = models.CharField(max_length = 100)
+    empresa = models.CharField(max_length = 150)
+    token_sesion = models.CharField(max_length=150, unique=True)
+
+
+class Empresa(models.Model):
+    nombre = models.CharField(max_length=150, unique=True)
+    encargado = models.CharField(max_length=100)
