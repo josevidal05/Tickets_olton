@@ -55,12 +55,14 @@ class Ticket(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
 
-class User(models.Model):
+class Usuario(models.Model):
     username = models.CharField(max_length = 50, unique=True)
     password = models.CharField(max_length = 155)
     nombre = models.CharField(max_length = 100)
     empresa = models.CharField(max_length = 150)
-    token_sesion = models.CharField(max_length=150, unique=True)
+    correo = models.EmailField(max_length=254, unique=True)
+    token_sesion = models.CharField(max_length=150)
+    admin = models.BooleanField(default=False)
 
 
 class Empresa(models.Model):
