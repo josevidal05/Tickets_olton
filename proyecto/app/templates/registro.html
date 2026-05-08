@@ -5,7 +5,7 @@
 <html>
 
 <head>
-    <title>Iniciar sesión</title>
+    <title>Registro</title>
     <link rel="stylesheet" href="{% static 'css/login.css' %}">
     <link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
     <link rel="icon" href="{% static 'img/olton.png' %}">
@@ -15,11 +15,8 @@
 <body>
 
     <div class="cabecera">
-        <a href="/">
-            <img src="{% static 'img/sistemas olton.png' %}" alt="logo" class="logo_cabecera">
-        </a>
-        
-        <a href="/login/">
+        <img src="{% static 'img/sistemas olton.png' %}" alt="logo" class="logo_cabecera">
+        <a href="/perfil/">
             <svg class="user_cabecera" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                 class="bi bi-person" viewBox="0 0 16 16">
                 <path
@@ -29,20 +26,35 @@
     </div>
 
     <div class="titulo">
-        <h1>Inicia sesión</h1>
+        <h1>Registro</h1>
         <h4>Introduzca los datos</h4>
     </div>
 
-    <form method="POST" action="{% url 'iniciar_sesion' %}">
-        {% csrf_token %}
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
 
-        {% if error %}
-            <alert class="alert alert-danger">{{ error }}</alert>
-        {% endif %}
+    <form method="POST" action="{% url 'registrar_usuario_w' %}">
+        {% csrf_token %}
 
         <div class="username">
             <p>Nombre de usuario:</p>
             <input type="text" name="username" required>
+        </div>
+
+        <div class="nombre">
+            <p>Nombre:</p>
+            <input type="text" name="nombre" required>
+        </div>
+
+        <div class="empresa">
+            <p>Empresa:</p>
+            <input type="text" name="empresa" required>
+        </div>
+
+        <div class="correo"> 
+            <p>Correo electrónico:</p>
+            <input type="email" name="correo" required>
         </div>
 
         <div class="password">
@@ -50,11 +62,17 @@
             <input type="password" name="password" required>
         </div>
 
-        <button type="submit">Iniciar sesión</button>
+        <div class="confirm_password">
+            <p>Confirmar contraseña:</p>
+            <input type="password" name="confirm_password" required>
+
+        </div>
+
+        <button type="submit">Registrarse</button>
 
     </form>
 
-    <p>¿No tienes cuenta? <a href="/registro/">Regístrate</a> </p>
+    <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión</a> </p>
 
 
 

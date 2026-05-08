@@ -1,0 +1,207 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ticket #{{ ticket.id }}</title>
+    <link rel="stylesheet" href="{% static 'css/ticket.css' %}">
+    <link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
+    <link rel="icon" href="{% static 'img/olton.png' %}">
+</head>
+
+<body>
+
+    <div class="cabecera">
+        <a href="/">
+            <img src="{% static 'img/sistemas olton.png' %}" alt="logo" class="logo_cabecera">
+        </a>
+        <a href="/perfil/">
+            <svg class="user_cabecera" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-person" viewBox="0 0 16 16">
+                <path
+                    d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
+            </svg>
+        </a>
+    </div>
+    
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% else %}
+
+    <div class="container">
+        
+            <h2>Detalle del Ticket #{{ ticket.id }}</h2>
+            <form id="ticket-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>ID</label>
+                    <div class="form-value" id="id">{{ ticket.id }}</div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <div class="form-value">{{ ticket.empresa }}</div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>Contacto</label>
+                    <div class="form-value">{{ ticket.contacto }}</div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>Tipo de dispositivo</label>
+                    <div class="form-field">
+                        <span id="tipo_dispositivo-display">{{ ticket.get_tipo_dispositivo_display }}</span>
+                        <select id="tipo_dispositivo-edit" name="tipo_dispositivo" style="display:none;">
+                            <option value="maquina" {% if ticket.tipo_dispositivo == 'maquina' %}selected{% endif %}>Máquina</option>
+                            <option value="tracker" {% if ticket.tipo_dispositivo == 'tracker' %}selected{% endif %}>Tracker</option>
+                            <option value="otro" {% if ticket.tipo_dispositivo == 'otro' %}selected{% endif %}>Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>ID dispositivo</label>
+                    <div class="form-field">
+                        <span id="id_dispositivo-display">{{ ticket.id_dispositivo }}</span>
+                        <input type="number" id="id_dispositivo-edit" name="id_dispositivo" value="{{ ticket.id_dispositivo }}" style="display:none;">
+                    </div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <div class="form-field">
+                        <span id="observaciones-display">{{ ticket.observaciones }}</span>
+                        <textarea id="observaciones-edit" name="observaciones" style="display:none;">{{ ticket.observaciones }}</textarea>
+                    </div>
+                </div>
+                <div id="archivo-div" class="form-group">
+                    <!-- <label>Archivo</label> -->
+                    <div class="form-field">
+                        <span id="archivo-display">
+                            {% if ticket.archivo %}
+                                <a href="{{ ticket.archivo.url }}" target="_blank">{{ ticket.archivo.name }}</a>
+                            {% else %}
+                                No hay archivo adjunto
+                            {% endif %}
+                        </span>
+                        <input type="file" id="archivo-edit" name="archivo" accept="image/*" style="display:none; margin-top: .5rem;">
+                    </div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>Portes</label>
+                    <div class="form-field">
+                        <span id="portes-display">{{ ticket.get_portes_display }}</span>
+                        <select id="portes-edit" name="portes" style="display:none;">
+                            <option value="pagado" {% if ticket.portes == 'pagado' %}selected{% endif %}>Pagado</option>
+                            <option value="debido" {% if ticket.portes == 'debido' %}selected{% endif %}>Debido</option>
+                        </select>
+                    </div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>Empresa de transporte</label>
+                    <div class="form-field">
+                        <span id="empresa_transporte-display">{{ ticket.empresa_transporte }}</span>
+                        <input type="text" id="empresa_transporte-edit" name="empresa_transporte" value="{{ ticket.empresa_transporte }}" style="display:none;">
+                    </div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>Fecha de creación</label>
+                    <div class="form-value">{{ ticket.fecha_creacion }}</div>
+                </div>
+            </form>
+
+            <div class="botones">
+                <button id="edit-btn">Editar</button>
+                <button id="save-btn" style="display:none;">Guardar Cambios</button>
+                <button id="cancel-btn" style="display:none;">Cancelar</button>
+                <button id="delete-btn">Eliminar Ticket</button>
+            </div>
+            
+            
+        {% endif %}
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const form = document.getElementById('ticket-form');
+
+        document.getElementById('edit-btn').addEventListener('click', function() {
+            // Mostrar campos de edición
+            document.querySelectorAll('[id$="-display"]').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('[id$="-edit"]').forEach(el => el.style.display = 'inline');
+            document.getElementById('edit-btn').style.display = 'none';
+            document.getElementById('save-btn').style.display = 'inline';
+            document.getElementById('cancel-btn').style.display = 'inline';
+            document.getElementById('delete-btn').style.display = 'none';
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', function() {
+            // Ocultar campos de edición
+            document.querySelectorAll('[id$="-display"]').forEach(el => el.style.display = 'inline');
+            document.querySelectorAll('[id$="-edit"]').forEach(el => el.style.display = 'none');
+            document.getElementById('edit-btn').style.display = 'inline';
+            document.getElementById('save-btn').style.display = 'none';
+            document.getElementById('cancel-btn').style.display = 'none';
+            document.getElementById('delete-btn').style.display = 'inline';
+        });
+
+        document.getElementById('save-btn').addEventListener('click', function() {
+            const formData = new FormData(form);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Ticket actualizado correctamente');
+                    location.reload();
+                } else {
+                    alert('Error al actualizar: ' + (result.error || '')); 
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar el ticket');
+            });
+        });
+
+        document.getElementById('delete-btn').addEventListener('click', function() {
+            if (confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
+                fetch(window.location.href, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert('Ticket eliminado correctamente');
+                        window.location.href = '/perfil/';
+                    } else {
+                        alert('Error al eliminar: ' + result.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar el ticket');
+                });
+            }
+        });
+    </script>
+
+</body>
+
+</html>
