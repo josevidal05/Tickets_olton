@@ -17,18 +17,34 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from app import views
+from app import views_ad
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    # urls para web
     path('', views.index),
     path('gestion/', views.comprobar_tickets),
     path('login/', views.login),
+    path('iniciar_sesion/', views.iniciar_sesion, name='iniciar_sesion'),
+    path('logout/', views.logout, name='logout'),
     path('admin/', admin.site.urls),
     path("tickets/", views.ticket_w),
-    path("tickets_android/", views.ticket_ad),
-    path("tickets/<int:ticket_id>/", views.ticket_id)
+    path("ticket/<int:ticket_id>/", views.ticket_id),
+    path("perfil/", views.perfil),
+    path("registro/", views.registro),
+    path("registrar_usuario/", views.registar_usuario_w, name='registrar_usuario_w'),
+    #path("tickets_usuario/", views.tickets_usuario), # para ver todos los tickets del usuario, esta en json
+
+    # urls para android
+    path("android/registrar_usuario/", views_ad.registrar_usuario_ad),
+    path("android/login/", views_ad.iniciar_sesion_ad),
+    path("android/logout/", views_ad.logout_ad),
+    path("android/tickets/", views_ad.ticket_ad),
+    path("android/tickets/<int:ticket_id>/", views_ad.ticket_id_ad),
+    path("android/tickets_usuario/", views_ad.tickets_usuario_ad),
 ]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
