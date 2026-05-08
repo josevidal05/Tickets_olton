@@ -1,30 +1,4 @@
-body {
-    margin: 0;
-    text-align: center;
-    font-family: Arial, Helvetica, sans-serif;
-}
 
-
-.cabecera{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    background-color: black;
-    padding: 10px 20px;
-}
-
-.logo_cabecera {
-    width: auto;
-    height: 50px;
-}
-
-
-.user_cabecera{
-    color: white;
-    width: 25px;
-    height: 25px;
-}
 
 h1{
     font-size: 40px;
@@ -68,7 +42,7 @@ form div p {
 }
 
 textarea, input, select, .subir_archivo{
-    padding: 10px 0px;
+    padding: 10px 10px;
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
