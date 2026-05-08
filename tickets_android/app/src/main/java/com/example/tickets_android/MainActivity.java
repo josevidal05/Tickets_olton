@@ -1,5 +1,7 @@
 package com.example.tickets_android;
 
+import static androidx.activity.result.ActivityResultCallerKt.registerForActivityResult;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
