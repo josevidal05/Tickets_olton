@@ -6,8 +6,8 @@
         android:icon="@drawable/inicio" />
     <item
         android:id="@+id/biblioteca"
-        android:title="Biblioteca"
-        android:icon="@drawable/libreria"/>
+        android:title="Tickets"
+        android:icon="@drawable/ticket"/>
     <item
         android:id="@+id/perfil"
         android:title="Perfil"
