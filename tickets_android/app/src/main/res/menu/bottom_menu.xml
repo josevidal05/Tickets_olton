@@ -5,9 +5,9 @@
         android:title="Inicio"
         android:icon="@drawable/inicio" />
     <item
-        android:id="@+id/biblioteca"
+        android:id="@+id/tickets"
         android:title="Tickets"
-        android:icon="@drawable/ticket"/>
+        android:icon="@drawable/tickets"/>
     <item
         android:id="@+id/perfil"
         android:title="Perfil"
