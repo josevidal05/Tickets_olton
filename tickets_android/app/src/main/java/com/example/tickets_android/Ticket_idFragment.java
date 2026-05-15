@@ -42,9 +42,10 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class TicketActivity extends AppCompatActivity {
 
-    private final String url = "http://192.168.0.151:8000/tickets_android/";
+    private String url = Conexiones.TICKETS_URL ;
+    // Esta url es para cuando el servidor se arranque para un movil físico
     private Button btnEnviar;
     private TextView tvNombreArchivo;
     
@@ -88,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.fragment_inicio);
 
         btnEnviar = findViewById(R.id.btnEnviarTicket);
         Button btnSeleccionarArchivo = findViewById(R.id.btnSeleccionarArchivo);
@@ -172,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
 
         VolleyMultipartRequest multipartRequest = new VolleyMultipartRequest(Request.Method.POST, url,
                 response -> {
-                    Toast.makeText(MainActivity.this, "¡TICKET GUARDADO!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(TicketActivity.this, "¡TICKET GUARDADO!", Toast.LENGTH_LONG).show();
                     btnEnviar.setEnabled(true);
                     btnEnviar.setText("Enviar Ticket");
                     limpiarCampos();
@@ -183,9 +184,9 @@ public class MainActivity extends AppCompatActivity {
                     if (error.networkResponse != null) {
                         String body = new String(error.networkResponse.data, StandardCharsets.UTF_8);
                         Log.e("DJANGO_ERROR", body);
-                        Toast.makeText(MainActivity.this, "Error " + error.networkResponse.statusCode + ": " + body, Toast.LENGTH_LONG).show();
+                        Toast.makeText(TicketActivity.this, "Error " + error.networkResponse.statusCode + ": " + body, Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(MainActivity.this, "Error de conexión", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(TicketActivity.this, "Error de conexión", Toast.LENGTH_SHORT).show();
                     }
                 }) {
             @Override

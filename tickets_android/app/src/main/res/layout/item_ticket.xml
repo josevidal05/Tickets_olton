@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="0dp"
+    android:gravity="center_vertical"
+    android:weightSum="9">
+
+    <!-- ID -->
+    <TextView
+        android:id="@+id/item_id"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="1"
+        android:textSize="11sp"
+        android:textColor="#555555"
+        android:gravity="center" />
+
+    <!-- Empresa -->
+    <TextView
+        android:id="@+id/item_empresa"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2.8"
+        android:text="Olton"
+        android:textSize="11sp"
+        android:textColor="#555555"
+        android:paddingStart="8dp"
+        android:gravity="center" />
+
+    <!-- Contacto -->
+    <TextView
+        android:id="@+id/item_contacto"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2.4"
+        android:text="José"
+        android:textSize="11sp"
+        android:textColor="#555555"
+        android:paddingStart="4dp"
+        android:gravity="center" />
+
+    <!-- Creado -->
+    <TextView
+        android:id="@+id/item_fecha"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2.8"
+        android:gravity="end|center_vertical"
+        android:maxLines="1"
+        android:paddingEnd="8dp"
+        android:text="13/4/2026, 11:57:09"
+        android:textColor="#555555"
+        android:textSize="11sp" />
+
+</LinearLayout>
