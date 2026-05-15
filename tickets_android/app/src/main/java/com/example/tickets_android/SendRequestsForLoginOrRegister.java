@@ -1,10 +1,11 @@
-package com.example.jadmusic;
+package com.example.tickets_android;
 
 import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -30,52 +31,59 @@ public class SendRequestsForLoginOrRegister {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        Toast.makeText(context, onResponse, Toast.LENGTH_SHORT).show();
-
                         try {
-
+                            // Guardar Token
                             String receivedToken = response.getString("token");
-
                             SharedPreferences preferences = context.getSharedPreferences("SESSIONS_APP_PREFS", MODE_PRIVATE);
                             SharedPreferences.Editor editor = preferences.edit();
                             editor.putString("VALID_TOKEN", receivedToken);
                             editor.apply();
 
+                            // Guardar datos de usuario
                             String nombreRecibido = response.optString("nombreUsuario", "Usuario");
-                            String emailRecibido = response.optString("email", "sin_correo@jadmusic.com");
-
                             SharedPreferences userPrefs = context.getSharedPreferences("sesion_usuario", MODE_PRIVATE);
                             SharedPreferences.Editor userEditor = userPrefs.edit();
                             userEditor.putString("key_nombre", nombreRecibido);
-                            userEditor.putString("key_email", emailRecibido);
                             userEditor.apply();
 
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Toast.makeText(context, "Error al leer datos del servidor", Toast.LENGTH_SHORT).show();
-                        }
+                            Toast.makeText(context, onResponse, Toast.LENGTH_SHORT).show();
 
-                        Intent myIntent = new Intent(context, MainActivity.class);
-                        myIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        context.startActivity(myIntent);
+                            // Navegar a la siguiente pantalla
+                            Intent myIntent = new Intent(context, MainActivity.class);
+                            myIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            context.startActivity(myIntent);
+
+                        } catch (JSONException e) {
+                            Log.e("API_ERROR", "Error al parsear JSON exitoso", e);
+                            Toast.makeText(context, "Error en los datos recibidos", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         if (error.networkResponse != null) {
-                            String jsonResponse = new String(error.networkResponse.data);
+                            int statusCode = error.networkResponse.statusCode;
+                            String data = new String(error.networkResponse.data);
+
+                            Log.e("API_ERROR", "Código de estado: " + statusCode);
+                            Log.e("API_ERROR", "Respuesta del servidor: " + data);
+
+                            if (statusCode == 500) {
+                                Toast.makeText(context, "Error interno del servidor (500)", Toast.LENGTH_LONG).show();
+                                return;
+                            }
+
                             try {
-                                JSONObject jsonObject = new JSONObject(jsonResponse);
+                                JSONObject jsonObject = new JSONObject(data);
                                 String errorMsg = jsonObject.optString("error", "Error en la solicitud");
                                 Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show();
-
                             } catch (JSONException e) {
-                                e.printStackTrace();
-                                Toast.makeText(context, "Error al procesar la respuesta", Toast.LENGTH_SHORT).show();
+                                // Si no es JSON, probablemente sea HTML de error
+                                Toast.makeText(context, "El servidor respondió con un error no legible", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(context, "Fallo de conexión con el servidor", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "No se pudo conectar con el servidor", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }

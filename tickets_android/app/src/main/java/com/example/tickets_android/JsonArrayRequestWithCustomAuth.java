@@ -1,4 +1,4 @@
-package com.example.jadmusic;
+package com.example.tickets_android;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -18,7 +18,7 @@ public class JsonArrayRequestWithCustomAuth extends JsonArrayRequest {
 
     private Context context;
 
-    public JsonArrayRequestWithCustomAuth(int method, String url, @Nullable JSONArray jsonRequest, Response.Listener<JSONArray> listener, @Nullable Response.ErrorListener errorListener,Context context) {
+    public JsonArrayRequestWithCustomAuth(int method, String url, @Nullable JSONArray jsonRequest, Response.Listener<JSONArray> listener, @Nullable Response.ErrorListener errorListener, Context context) {
         super(method, url, jsonRequest, listener, errorListener);
         this.context=context;
     }
