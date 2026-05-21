@@ -16,12 +16,13 @@ public class Usuario {
     public Usuario(JSONObject jsonObject) {
 
         try {
-            this.id = jsonObject.getInt("id");
-            this.username = jsonObject.optString("contacto", "");
-            this.empresa = jsonObject.optString("empresa", "");
+            this.id = jsonObject.optInt("id", 0);
+            // Intentamos coger 'contacto', si no 'username'
+            this.username = jsonObject.optString("contacto", jsonObject.optString("username", "Usuario"));
+            this.empresa = jsonObject.optString("empresa", "Empresa no cargada");
             this.nombre = jsonObject.optString("nombre", "");
             this.correo = jsonObject.optString("correo", "");
-        }catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -1,7 +1,9 @@
 package com.example.tickets_android;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -27,7 +29,14 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +53,67 @@ public class InicioFragment extends Fragment {
     private TextView tvNombreArchivo;
     private Uri archivoUri;
     private String currentPhotoPath;
+    private Usuario usuarioActual;
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        obtenerDatosUsuario(); // Llamamos a la base de datos al cargar
+    }
+
+    private void obtenerDatosUsuario() {
+        String urlPerfil = Conexiones.PERFIL_USUARIO;
+
+        // Intentamos obtener el perfil. Si tu Django devuelve una lista [ {...} ],
+        // usamos JsonArrayRequestWithCustomAuth
+        JsonArrayRequestWithCustomAuth request = new JsonArrayRequestWithCustomAuth(
+                Request.Method.GET, urlPerfil, null,
+                response -> {
+                    try {
+                        if (response.length() > 0) {
+                            // Cogemos el primer usuario de la lista
+                            JSONObject userJson = response.getJSONObject(0);
+                            usuarioActual = new Usuario(userJson);
+                            actualizarInterfazUsuario();
+                        }
+                    } catch (JSONException e) {
+                        Log.e("ERROR", "Error al parsear el array de usuario");
+                    }
+                },
+                error -> {
+                    // Si falla como Array, intentamos como Objeto único por si acaso
+                    intentarCargarComoObjeto(urlPerfil);
+                },
+                requireContext()
+        );
+        Volley.newRequestQueue(requireContext()).add(request);
+    }
+
+    private void intentarCargarComoObjeto(String url) {
+        JsonObjectRequestWithCustomAuth request = new JsonObjectRequestWithCustomAuth(
+                Request.Method.GET, url, null,
+                response -> {
+                    usuarioActual = new Usuario(response);
+                    actualizarInterfazUsuario();
+                },
+                error -> {
+                    Log.e("API", "Error total al cargar perfil: " + error.toString());
+                    Toast.makeText(requireContext(), "Error: No se pudo conectar con el perfil en la BD", Toast.LENGTH_SHORT).show();
+                },
+                requireContext()
+        );
+        Volley.newRequestQueue(requireContext()).add(request);
+    }
+
+    private void actualizarInterfazUsuario() {
+        if (getView() != null && usuarioActual != null) {
+            EditText etEmpresa = getView().findViewById(R.id.etNombreEmpresa);
+            EditText etNombre = getView().findViewById(R.id.etNombre);
+
+            if (etEmpresa != null) etEmpresa.setText(usuarioActual.getEmpresa());
+            if (etNombre != null) etNombre.setText(usuarioActual.getUsername());
+        }
+    }
     // Launchers para permisos y archivos (adaptados para Fragment)
     private final ActivityResultLauncher<Intent> cameraLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -68,6 +137,17 @@ public class InicioFragment extends Fragment {
         btnEnviar = root.findViewById(R.id.btnEnviarTicket);
         Button btnSeleccionarArchivo = root.findViewById(R.id.btnSeleccionarArchivo);
         tvNombreArchivo = root.findViewById(R.id.tvNombreArchivo);
+
+        // Pre-rellenar empresa y contacto con los datos de sesión y bloquear edición
+        SharedPreferences userPrefs = requireContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        EditText etEmpresa = root.findViewById(R.id.etNombreEmpresa);
+        EditText etNombre = root.findViewById(R.id.etNombre);
+
+        etEmpresa.setText(userPrefs.getString("key_empresa", ""));
+        etNombre.setText(userPrefs.getString("key_nombre", ""));
+
+        etEmpresa.setEnabled(false);
+        etNombre.setEnabled(false);
 
         btnEnviar.setOnClickListener(v -> enviarTicket(root));
         btnSeleccionarArchivo.setOnClickListener(v -> mostrarOpcionesArchivo());
@@ -121,8 +201,82 @@ public class InicioFragment extends Fragment {
     }
 
     private void enviarTicket(View root) {
-        // Implementa aquí tu lógica de VolleyMultipartRequest igual que la tenías,
-        // pero usando requireContext() en lugar de "this".
-        Toast.makeText(requireContext(), "Enviando...", Toast.LENGTH_SHORT).show();
-    }
-}
+        if (usuarioActual == null) {
+            obtenerDatosUsuario();
+            Toast.makeText(requireContext(), "Cargando datos de perfil...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Referencias a los campos
+        EditText etIdDisp = root.findViewById(R.id.etIdDispositivo);
+        EditText etDuda = root.findViewById(R.id.etDuda);
+        EditText etTransporte = root.findViewById(R.id.etTransporte);
+        Spinner spTipo = root.findViewById(R.id.spinnerTipoDispositivo);
+        Spinner spPortes = root.findViewById(R.id.spinnerPortes);
+
+        // Validamos que los campos obligatorios no estén vacíos en la UI
+        String observaciones = etDuda.getText().toString().trim();
+        String transporte = etTransporte.getText().toString().trim();
+
+        if (observaciones.isEmpty()) {
+            etDuda.setError("Este campo es obligatorio");
+            return;
+        }
+        if (transporte.isEmpty()) {
+            etTransporte.setError("Este campo es obligatorio");
+            return;
+        }
+
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("empresa", usuarioActual.getEmpresa());
+            jsonBody.put("contacto", usuarioActual.getUsername());
+
+            String tipoStr = spTipo.getSelectedItem().toString();
+            String portesStr = spPortes.getSelectedItem().toString();
+
+            jsonBody.put("tipo_dispositivo", tipoStr);
+            jsonBody.put("portes", portesStr);
+            jsonBody.put("observaciones", observaciones);
+            jsonBody.put("transporte", transporte);
+
+            String idStr = etIdDisp.getText().toString().trim();
+            jsonBody.put("id_dispositivo", idStr.isEmpty() ? 0 : Integer.parseInt(idStr));
+
+            jsonBody.put("estado", "no leido");
+
+            Log.d("APP_DEBUG", "JSON enviado: " + jsonBody.toString());
+
+        } catch (Exception e) {
+            Log.e("APP_ERROR", "Error al crear JSON: " + e.getMessage());
+        }
+
+        // LOG DE DEPURACIÓN: Revisa esto en el Logcat para ver qué estás enviando
+        Log.d("API_DEBUG", "Enviando JSON: " + jsonBody.toString());
+
+        JsonObjectRequestWithCustomAuth request = new JsonObjectRequestWithCustomAuth(
+                Request.Method.POST, url, jsonBody,
+                response -> {
+                    Toast.makeText(requireContext(), "Ticket enviado con éxito", Toast.LENGTH_SHORT).show();
+                    etIdDisp.setText("");
+                    etDuda.setText("");
+                    etTransporte.setText("");
+                },
+                error -> {
+                    String errorMsg = "Error 400";
+                    if (error.networkResponse != null && error.networkResponse.data != null) {
+                        try {
+                            // El servidor suele responder con el nombre del campo que falla
+                            errorMsg = new String(error.networkResponse.data, "UTF-8");
+                            Log.e("API_ERROR", "Respuesta del servidor: " + errorMsg);
+                        } catch (Exception e) {
+                            errorMsg = "Código: " + error.networkResponse.statusCode;
+                        }
+                    }
+                    Toast.makeText(requireContext(), "Fallo: " + errorMsg, Toast.LENGTH_LONG).show();
+                },
+                requireContext()
+        );
+
+        Volley.newRequestQueue(requireContext()).add(request);
+    }}

@@ -24,7 +24,8 @@ public class Conexiones {
     // obtener tickets por usuario
     public static final String TICKET_USUARIO = BASE_URL + "/android/tickets_usuario/";
 
-    //
+    // obtener perfil de usuario
+    public static final String PERFIL_USUARIO = BASE_URL + "/android/perfil/";
     //public static final String  = BASE_URL + "/android/tickets/";
 
 

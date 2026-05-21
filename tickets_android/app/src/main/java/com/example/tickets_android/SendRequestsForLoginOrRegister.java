@@ -31,6 +31,7 @@ public class SendRequestsForLoginOrRegister {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
+                        Log.d("API_SUCCESS", "Respuesta recibida: " + response.toString());
                         try {
                             // Guardar Token
                             String receivedToken = response.getString("token");
@@ -39,11 +40,30 @@ public class SendRequestsForLoginOrRegister {
                             editor.putString("VALID_TOKEN", receivedToken);
                             editor.apply();
 
-                            // Guardar datos de usuario
-                            String nombreRecibido = response.optString("nombreUsuario", "Usuario");
+                            // Intentar obtener datos del usuario de la respuesta
+                            // Fallback al requestBody si no están en la respuesta
+                            String nombreRecibido = response.optString("nombreUsuario", 
+                                    response.optString("username", 
+                                            requestBody.optString("username", "Usuario")));
+                            
+                            String empresaRecibida = response.optString("empresa", 
+                                    requestBody.optString("empresa", ""));
+
+                            // Si el servidor devuelve un objeto "user", buscamos dentro
+                            if (response.has("user")) {
+                                JSONObject userObj = response.getJSONObject("user");
+                                if (nombreRecibido.equals("Usuario")) {
+                                    nombreRecibido = userObj.optString("username", nombreRecibido);
+                                }
+                                if (empresaRecibida.isEmpty()) {
+                                    empresaRecibida = userObj.optString("empresa", empresaRecibida);
+                                }
+                            }
+
                             SharedPreferences userPrefs = context.getSharedPreferences("sesion_usuario", MODE_PRIVATE);
                             SharedPreferences.Editor userEditor = userPrefs.edit();
                             userEditor.putString("key_nombre", nombreRecibido);
+                            userEditor.putString("key_empresa", empresaRecibida);
                             userEditor.apply();
 
                             Toast.makeText(context, onResponse, Toast.LENGTH_SHORT).show();
@@ -55,7 +75,7 @@ public class SendRequestsForLoginOrRegister {
 
                         } catch (JSONException e) {
                             Log.e("API_ERROR", "Error al parsear JSON exitoso", e);
-                            Toast.makeText(context, "Error en los datos recibidos", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "Error en los datos recibidos del servidor", Toast.LENGTH_SHORT).show();
                         }
                     }
                 },
@@ -69,21 +89,15 @@ public class SendRequestsForLoginOrRegister {
                             Log.e("API_ERROR", "Código de estado: " + statusCode);
                             Log.e("API_ERROR", "Respuesta del servidor: " + data);
 
-                            if (statusCode == 500) {
-                                Toast.makeText(context, "Error interno del servidor (500)", Toast.LENGTH_LONG).show();
-                                return;
-                            }
-
                             try {
                                 JSONObject jsonObject = new JSONObject(data);
                                 String errorMsg = jsonObject.optString("error", "Error en la solicitud");
                                 Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show();
                             } catch (JSONException e) {
-                                // Si no es JSON, probablemente sea HTML de error
-                                Toast.makeText(context, "El servidor respondió con un error no legible", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, "Error " + statusCode + ": Servidor no disponible", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(context, "No se pudo conectar con el servidor", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "No se pudo conectar con el servidor. Revisa tu conexión.", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
