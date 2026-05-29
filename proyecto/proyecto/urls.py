@@ -22,13 +22,15 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
+
     # urls para web
     path('', views.index),
     path('gestion/', views.comprobar_tickets),
     path('login/', views.login),
-    path('iniciar_sesion/', views.iniciar_sesion, name='iniciar_sesion'),
     path('logout/', views.logout, name='logout'),
-    path('admin/', admin.site.urls),
+    
+    path('iniciar_sesion/', views.iniciar_sesion, name='iniciar_sesion'),
     path("tickets/", views.ticket_w),
     path("ticket/<int:ticket_id>/", views.ticket_id),
     path("perfil/", views.perfil),
@@ -41,8 +43,10 @@ urlpatterns = [
     path("android/login/", views_ad.iniciar_sesion_ad),
     path("android/logout/", views_ad.logout_ad),
     path("android/tickets/", views_ad.ticket_ad),
+    path("tickets_android/", views_ad.ticket_ad),
     path("android/tickets/<int:ticket_id>/", views_ad.ticket_id_ad),
     path("android/tickets_usuario/", views_ad.tickets_usuario_ad),
+    path("android/perfil/", views_ad.perfil_ad),
 ]
 
 

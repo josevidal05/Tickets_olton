@@ -8,11 +8,20 @@ from .models import Ticket, Usuario
 
 
 def __get_request_user_ad(request):
-    token = request.headers.get('Session') or request.META.get('HTTP_SESSION')
+    print(request)
+    token = request.headers.get('Authorization') or request.META.get('HTTP_SESSION')
+
     if not token:
         return None
     try:
+#        print(token)
+#        usuario = Usuario.objects.all()
+
+#        for u in usuario:
+#            print(u.token_sesion)
+
         return Usuario.objects.get(token_sesion=token)
+    
     except Usuario.DoesNotExist:
         return None
 
@@ -20,21 +29,33 @@ def __get_request_user_ad(request):
 @csrf_exempt
 def ticket_ad(request):
     if request.method == "POST":
+
+
         authenticated_user = __get_request_user_ad(request)
+
         if authenticated_user is None:
-            return JsonResponse({"error": "El token de sesión no es válido"}, status=401)
+          return JsonResponse({"error": "Token inválido"}, status=401)
 
         try:
+            data = json.loads(request.body)
+
+            # Validar campos requeridos antes de crear el ticket
+            required = ["tipo_dispositivo", "id_dispositivo", "observaciones", "portes", "transporte"]
+            for field in required:
+                val = data.get(field)
+                if val is None or (isinstance(val, str) and val.strip() == ""):
+                    return JsonResponse({"error": "Ningún campo puede estar vacío: %s" % field}, status=400)
+
             ticket = Ticket.objects.create(
-                empresa=request.POST.get("empresa"),
-                contacto=authenticated_user.username,
-                tipo_dispositivo=request.POST.get("tipo_dispositivo"),
-                id_dispositivo=request.POST.get("id_dispositivo"),
-                observaciones=request.POST.get("observaciones"),
-                portes=request.POST.get("portes"),
-                empresa_transporte=request.POST.get("transporte"),
-                archivo=request.FILES.get("archivo")
+                tipo_dispositivo=data.get("tipo_dispositivo"),
+                id_dispositivo=data.get("id_dispositivo"),
+                observaciones=data.get("observaciones"),
+                portes=data.get("portes"),
+                empresa_transporte=data.get("transporte"),
+                archivo=data.get("archivo"),
+                idUsuario=authenticated_user
             )
+
             return JsonResponse({"success": True, "id": ticket.id}, status=201)
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=400)
@@ -59,20 +80,25 @@ def registrar_usuario_ad(request):
 
     username = body_json.get('username') or body_json.get('new_username')
     password = body_json.get('password')
+    confirm_password = body_json.get('confirm_password')
     nombre = body_json.get('nombre') or body_json.get('name') or ''
     empresa = body_json.get('empresa') or body_json.get('company') or ''
+    correo = body_json.get('correo') or body_json.get('email') or ''
 
-    if username is None or password is None:
+    if username is None or password is None or correo is None:
         return JsonResponse({"error": "Faltan parámetros"}, status=400)
 
     if len(username) < 3:
-        return JsonResponse({"error": "Username too short"}, status=400)
+        return JsonResponse({"error": "El nombre de usuario es demasiado corto"}, status=400)
 
     if len(password) < 8:
-        return JsonResponse({"error": "Password too short"}, status=400)
+        return JsonResponse({"error": "La contraseña es demasiado corta"}, status=400)
+    
+    if password != confirm_password:
+        return JsonResponse({"error": "Las contraseñas no coinciden"}, status=400)
 
     if Usuario.objects.filter(username=username).exists():
-        return JsonResponse({"error": "Username already exists"}, status=409)
+        return JsonResponse({"error": "El nombre de usuario ya existe"}, status=409)
 
     hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
     random_token = secrets.token_hex(16)
@@ -82,6 +108,7 @@ def registrar_usuario_ad(request):
         password=hashed_password,
         nombre=nombre,
         empresa=empresa,
+        correo=correo,
         token_sesion=random_token,
     )
     user_object.save()
@@ -141,7 +168,7 @@ def tickets_usuario_ad(request):
     if authenticated_user is None:
         return JsonResponse({"error": "Token inválido"}, status=401)
 
-    tickets = Ticket.objects.filter(contacto=authenticated_user.username, empresa=authenticated_user.empresa).values()
+    tickets = Ticket.objects.filter(idUsuario=authenticated_user).values()
     return JsonResponse(list(tickets), safe=False, status=200)
 
 
@@ -153,22 +180,25 @@ def ticket_id_ad(request, ticket_id):
 
     try:
         ticket = Ticket.objects.get(id=ticket_id)
+
     except Ticket.DoesNotExist:
         return JsonResponse({"error": "El ticket no existe"}, status=404)
 
-    if ticket.contacto != authenticated_user.username or ticket.empresa != authenticated_user.empresa:
+
+    if ticket.idUsuario_id != authenticated_user.id:
+        print(ticket.idUsuario.id)
         return JsonResponse({"error": "No autorizado"}, status=403)
+
 
     if request.method == 'GET':
         return JsonResponse({
             "id": ticket.id,
-            "empresa": ticket.empresa,
-            "contacto": ticket.contacto,
             "tipo_dispositivo": ticket.tipo_dispositivo,
             "id_dispositivo": ticket.id_dispositivo,
             "observaciones": ticket.observaciones,
             "portes": ticket.portes,
             "empresa_transporte": ticket.empresa_transporte,
+            "idUsuario": ticket.idUsuario_id,
             "fecha_creacion": ticket.fecha_creacion,
         }, status=200)
 
@@ -182,18 +212,64 @@ def ticket_id_ad(request, ticket_id):
         except ValueError:
             return JsonResponse({"error": "JSON inválido"}, status=400)
 
-        ticket.empresa = data.get("empresa", ticket.empresa)
-        ticket.contacto = data.get("contacto", ticket.contacto)
         ticket.tipo_dispositivo = data.get("tipo_dispositivo", ticket.tipo_dispositivo)
         ticket.id_dispositivo = data.get("id_dispositivo", ticket.id_dispositivo)
         ticket.observaciones = data.get("observaciones", ticket.observaciones)
         ticket.portes = data.get("portes", ticket.portes)
         ticket.empresa_transporte = data.get("empresa_transporte", ticket.empresa_transporte)
+
+        if data.get("tipo_dispositivo") == "" or data.get("id_dispositivo") is None or data.get("observaciones") == "" or data.get("portes") == "" or data.get("empresa_transporte") == "":
+            return JsonResponse({"error": "Ningún campo puede estar vacío"}, status=400)
+
         ticket.save()
         return JsonResponse({"success": True}, status=200)
 
     else:
         return JsonResponse({"message": "Método no permitido"}, status=405)
+#$2b$12$siU8cNQt9vRKUJ9cpH0O0em39QAKnpFMUWH1AfhwIa2bqKoyujHZS
+#$2b$12$siU8cNQt9vRKUJ9cpH0O0em39QAKnpFMUWH1AfhwIa2bqKoyujHZS
 
+@csrf_exempt
+def perfil_ad(request):
+    authenticated_user = __get_request_user_ad(request)
+    if authenticated_user is None:
+        return JsonResponse({"error": "Token inválido"}, status=401)
 
+    if request.method == 'GET':
+        return JsonResponse({
+            "username": authenticated_user.username,
+            "password": authenticated_user.password,
+            "nombre": authenticated_user.nombre,
+            "empresa": authenticated_user.empresa,
+            "correo": authenticated_user.correo,
+        }, status=200)
 
+    elif request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return JsonResponse({"error": "JSON inválido"}, status=400)
+
+        print("contraseña", data.get("password"),"hola")
+        print("contraseña antigua", authenticated_user.password)
+        # Actualizar contraseña solo si se envía y no está vacía
+        new_password = data.get("password")
+        hashed_password = None
+        if new_password:
+            hashed_password = bcrypt.hashpw(new_password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
+            authenticated_user.password = hashed_password
+
+        authenticated_user.username = data.get("username", authenticated_user.username)
+        authenticated_user.nombre = data.get("nombre", authenticated_user.nombre)
+        authenticated_user.empresa = data.get("empresa", authenticated_user.empresa)
+        authenticated_user.correo = data.get("correo", authenticated_user.correo)
+        
+        if hashed_password:
+            print("contraseña nueva", hashed_password)
+        
+
+        authenticated_user.save()
+        return JsonResponse({"success": True}, status=200)
+
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
