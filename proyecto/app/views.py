@@ -16,7 +16,9 @@ def index(request):
 
 def comprobar_tickets(request):
     # Verificar si el usuario está autenticado
-    
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
     return render(request, 'comprobar_tickets.html')
 
 def login(request):

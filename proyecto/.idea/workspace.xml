@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="e69b22c8-d118-4c8e-b3fa-5642adea8f83" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/static/css/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/comprobar_tickets.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/comprobar_tickets.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/views_ad.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/views_ad.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/proyecto/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/proyecto/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/proyecto/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/proyecto/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Conexiones.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Conexiones.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/InicioFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/InicioFragment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/LoginActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/LoginActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/PerfilFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/PerfilFragment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/RegistroActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/RegistroActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/SendRequestsForLoginOrRegister.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/SendRequestsForLoginOrRegister.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Ticket.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Ticket.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/TicketAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/TicketAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/TicketFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/TicketFragment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Ticket_idActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Ticket_idActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Usuario.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Usuario.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/activity_datos_usuario.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/activity_datos_usuario.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/activity_ticket_id.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/activity_ticket_id.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_inicio.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_inicio.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_perfil.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_perfil.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/item_ticket.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/item_ticket.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/values/colors.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="3EOYFDfuxNRRTDtOkmZhqCuzKuG" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/Jose/tickets/proyecto"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-2653e85de345-6d6dccd035ac-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.31033.139" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e69b22c8-d118-4c8e-b3fa-5642adea8f83" name="Changes" comment="" />
+      <created>1780050977127</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1780050977127</updated>
+    </task>
+    <servers />
+  </component>
+</project>

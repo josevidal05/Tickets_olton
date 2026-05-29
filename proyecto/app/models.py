@@ -1,5 +1,3 @@
-# Para inicar el servidor en un movil conectado hay que usar python manage.py runserver 0.0.0.0:8000
-
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
@@ -17,6 +15,9 @@ def validate_image_file(value):
 
 
 class Ticket(models.Model):
+
+    empresa = models.CharField(max_length=150)
+    contacto = models.CharField(max_length=100)
 
     TIPO_DISPOSITIVO_CHOICES = [
         ('maquina', 'Máquina'),
@@ -50,7 +51,6 @@ class Ticket(models.Model):
         ('cerrado', 'Cerrado'),
     ]
 
-    idUsuario = models.ForeignKey('Usuario', on_delete=models.CASCADE)
            
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
@@ -58,11 +58,9 @@ class Ticket(models.Model):
 class Usuario(models.Model):
     username = models.CharField(max_length = 50, unique=True)
     password = models.CharField(max_length = 155)
-
     nombre = models.CharField(max_length = 100)
     empresa = models.CharField(max_length = 150)
     correo = models.EmailField(max_length=254, unique=True)
-
     token_sesion = models.CharField(max_length=150)
     admin = models.BooleanField(default=False)
 
