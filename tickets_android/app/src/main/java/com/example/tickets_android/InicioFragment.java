@@ -214,7 +214,6 @@ public class InicioFragment extends Fragment {
         Spinner spTipo = root.findViewById(R.id.spinnerTipoDispositivo);
         Spinner spPortes = root.findViewById(R.id.spinnerPortes);
 
-        // Validamos que los campos obligatorios no estén vacíos en la UI
         String observaciones = etDuda.getText().toString().trim();
         String transporte = etTransporte.getText().toString().trim();
 
@@ -227,56 +226,165 @@ public class InicioFragment extends Fragment {
             return;
         }
 
+        String tipoStr = spTipo.getSelectedItem().toString();
+        String portesStr = spPortes.getSelectedItem().toString();
+        String idStr = etIdDisp.getText().toString().trim();
+        String idDispositivo = idStr.isEmpty() ? "0" : idStr;
+
+        // Si hay imagen seleccionada → multipart/form-data
+        // Si no hay imagen → JSON normal
+        if (archivoUri != null) {
+            enviarConImagen(observaciones, transporte, tipoStr, portesStr, idDispositivo, etIdDisp, etDuda, etTransporte);
+        } else {
+            enviarSinImagen(observaciones, transporte, tipoStr, portesStr, idDispositivo, etIdDisp, etDuda, etTransporte);
+        }
+    }
+
+    private void enviarSinImagen(String observaciones, String transporte, String tipoStr,
+                                  String portesStr, String idDispositivo,
+                                  EditText etIdDisp, EditText etDuda, EditText etTransporte) {
         JSONObject jsonBody = new JSONObject();
         try {
-            jsonBody.put("empresa", usuarioActual.getEmpresa());
-            jsonBody.put("contacto", usuarioActual.getUsername());
-
-            String tipoStr = spTipo.getSelectedItem().toString();
-            String portesStr = spPortes.getSelectedItem().toString();
-
             jsonBody.put("tipo_dispositivo", tipoStr);
             jsonBody.put("portes", portesStr);
             jsonBody.put("observaciones", observaciones);
             jsonBody.put("transporte", transporte);
-
-            String idStr = etIdDisp.getText().toString().trim();
-            jsonBody.put("id_dispositivo", idStr.isEmpty() ? 0 : Integer.parseInt(idStr));
-
+            jsonBody.put("id_dispositivo", idDispositivo.isEmpty() ? 0 : Integer.parseInt(idDispositivo));
             jsonBody.put("estado", "no leido");
-
-            Log.d("APP_DEBUG", "JSON enviado: " + jsonBody.toString());
-
+            Log.d("APP_DEBUG", "JSON enviado (sin imagen): " + jsonBody.toString());
         } catch (Exception e) {
             Log.e("APP_ERROR", "Error al crear JSON: " + e.getMessage());
         }
 
-        // LOG DE DEPURACIÓN: Revisa esto en el Logcat para ver qué estás enviando
-        Log.d("API_DEBUG", "Enviando JSON: " + jsonBody.toString());
-
         JsonObjectRequestWithCustomAuth request = new JsonObjectRequestWithCustomAuth(
-                Request.Method.POST, url, jsonBody,
+                com.android.volley.Request.Method.POST, url, jsonBody,
                 response -> {
                     Toast.makeText(requireContext(), "Ticket enviado con éxito", Toast.LENGTH_SHORT).show();
-                    etIdDisp.setText("");
-                    etDuda.setText("");
-                    etTransporte.setText("");
+                    etIdDisp.setText(""); etDuda.setText(""); etTransporte.setText("");
+                    archivoUri = null;
+                    tvNombreArchivo.setText("");
                 },
                 error -> {
-                    String errorMsg = "Error 400";
+                    String errorMsg = "Error al enviar";
                     if (error.networkResponse != null && error.networkResponse.data != null) {
-                        try {
-                            // El servidor suele responder con el nombre del campo que falla
-                            errorMsg = new String(error.networkResponse.data, "UTF-8");
-                            Log.e("API_ERROR", "Respuesta del servidor: " + errorMsg);
-                        } catch (Exception e) {
-                            errorMsg = "Código: " + error.networkResponse.statusCode;
-                        }
+                        try { errorMsg = new String(error.networkResponse.data, "UTF-8"); } catch (Exception ignored) {}
                     }
                     Toast.makeText(requireContext(), "Fallo: " + errorMsg, Toast.LENGTH_LONG).show();
                 },
                 requireContext()
         );
-
         Volley.newRequestQueue(requireContext()).add(request);
-    }}
+    }
+
+    private void enviarConImagen(String observaciones, String transporte, String tipoStr,
+                                  String portesStr, String idDispositivo,
+                                  EditText etIdDisp, EditText etDuda, EditText etTransporte) {
+        String boundary = "----FormBoundary" + System.currentTimeMillis();
+
+        com.android.volley.toolbox.StringRequest multipartRequest = new com.android.volley.toolbox.StringRequest(
+                com.android.volley.Request.Method.POST, url,
+                response -> {
+                    Toast.makeText(requireContext(), "Ticket con imagen enviado con éxito", Toast.LENGTH_SHORT).show();
+                    etIdDisp.setText(""); etDuda.setText(""); etTransporte.setText("");
+                    archivoUri = null;
+                    tvNombreArchivo.setText("");
+                },
+                error -> {
+                    String errorMsg = "Error al enviar con imagen";
+                    if (error.networkResponse != null && error.networkResponse.data != null) {
+                        try { errorMsg = new String(error.networkResponse.data, "UTF-8"); } catch (Exception ignored) {}
+                    }
+                    Log.e("UPLOAD_ERROR", errorMsg);
+                    Toast.makeText(requireContext(), "Fallo: " + errorMsg, Toast.LENGTH_LONG).show();
+                }
+        ) {
+            @Override
+            public String getBodyContentType() {
+                return "multipart/form-data; boundary=" + boundary;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "multipart/form-data; boundary=" + boundary);
+                android.content.SharedPreferences prefs = requireContext()
+                        .getSharedPreferences("SESSIONS_APP_PREFS", android.content.Context.MODE_PRIVATE);
+                String token = prefs.getString("VALID_TOKEN", "");
+                if (!token.isEmpty()) headers.put("Session", token);
+                return headers;
+            }
+
+            @Override
+            public byte[] getBody() {
+                try {
+                    android.content.ContentResolver cr = requireContext().getContentResolver();
+                    String mimeType = cr.getType(archivoUri);
+                    if (mimeType == null) mimeType = "image/jpeg";
+                    String extension = mimeType.contains("png") ? ".png" : ".jpg";
+                    String fileName = "imagen_ticket" + extension;
+
+                    Log.d("UPLOAD_DEBUG", "Iniciando lectura y compresión de archivo. URI: " + archivoUri);
+
+                    byte[] fileBytes = obtenerBytesImagenComprimida(archivoUri);
+                    if (fileBytes == null) {
+                        Log.e("UPLOAD_DEBUG", "No se pudo obtener o comprimir la imagen");
+                        return null;
+                    }
+
+                    java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+
+                    // Campos de texto
+                    String[] fields = {"tipo_dispositivo", "portes", "observaciones", "transporte", "id_dispositivo", "estado"};
+                    String[] values = {tipoStr, portesStr, observaciones, transporte, idDispositivo, "no leido"};
+
+                    for (int i = 0; i < fields.length; i++) {
+                        bos.write(("--" + boundary + "\r\n").getBytes());
+                        bos.write(("Content-Disposition: form-data; name=\"" + fields[i] + "\"\r\n\r\n").getBytes());
+                        bos.write((values[i] + "\r\n").getBytes());
+                    }
+
+                    // Campo de archivo
+                    bos.write(("--" + boundary + "\r\n").getBytes());
+                    bos.write(("Content-Disposition: form-data; name=\"archivo\"; filename=\"" + fileName + "\"\r\n").getBytes());
+                    bos.write(("Content-Type: " + mimeType + "\r\n\r\n").getBytes());
+
+                    bos.write(fileBytes);
+                    Log.d("UPLOAD_DEBUG", "Bytes de archivo comprimido escritos: " + fileBytes.length);
+
+                    bos.write(("\r\n--" + boundary + "--\r\n").getBytes());
+                    
+                    byte[] requestBody = bos.toByteArray();
+                    Log.d("UPLOAD_DEBUG", "Multipart construido con éxito. Total bytes request body: " + requestBody.length);
+                    return requestBody;
+
+                } catch (Exception e) {
+                    Log.e("UPLOAD_ERROR", "Error construyendo multipart: " + e.getMessage(), e);
+                    return null;
+                }
+            }
+        };
+
+        Volley.newRequestQueue(requireContext()).add(multipartRequest);
+    }
+
+    private byte[] obtenerBytesImagenComprimida(Uri uri) {
+        try {
+            android.content.ContentResolver cr = requireContext().getContentResolver();
+            java.io.InputStream is = cr.openInputStream(uri);
+            android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(is);
+            if (is != null) is.close();
+
+            if (bitmap == null) return null;
+
+            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+            // Comprimir a JPEG con calidad 80 (reduce el tamaño a unos cientos de KB)
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, bos);
+            byte[] bytes = bos.toByteArray();
+            bitmap.recycle();
+            return bytes;
+        } catch (Exception e) {
+            Log.e("COMPRESS_ERROR", "Error al comprimir la imagen: " + e.getMessage());
+            return null;
+        }
+    }
+}

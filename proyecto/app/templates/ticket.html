@@ -81,7 +81,10 @@
                     <div class="form-field">
                         <span id="archivo-display">
                             {% if ticket.archivo %}
-                                <a href="{{ ticket.archivo.url }}" target="_blank">{{ ticket.archivo.name }}</a>
+                                <a href="{{ ticket.archivo.url }}" target="_blank">
+                                    <img src="{{ ticket.archivo.url }}" alt="Imagen adjunta" style="max-width: 100%; max-height: 300px; display: block; margin-top: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                    <br>{{ ticket.archivo.name }}
+                                </a>
                             {% else %}
                                 No hay archivo adjunto
                             {% endif %}

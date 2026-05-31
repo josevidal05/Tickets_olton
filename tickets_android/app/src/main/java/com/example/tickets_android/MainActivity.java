@@ -1,6 +1,7 @@
 package com.example.tickets_android;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -23,6 +24,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
+
+        // Verificar si el usuario está autenticado antes de cargar la app
+        SharedPreferences authPrefs = getSharedPreferences("SESSIONS_APP_PREFS", MODE_PRIVATE);
+        String token = authPrefs.getString("VALID_TOKEN", "");
+
+        if (token.isEmpty()) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
 
         SharedPreferences sharedPref = getSharedPreferences("ajustes_tema", Context.MODE_PRIVATE);
         boolean isModoOscuro = sharedPref.getBoolean("modo_oscuro_activado", false);

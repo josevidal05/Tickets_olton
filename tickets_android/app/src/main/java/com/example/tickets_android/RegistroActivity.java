@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
@@ -44,7 +45,7 @@ public class RegistroActivity extends AppCompatActivity {
         }
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_registro);
+        setContentView(R.layout.activity_registro);
 
         et_usuario = findViewById(R.id.nombre_usuario);
         et_nombre = findViewById(R.id.nombre);
@@ -59,14 +60,28 @@ public class RegistroActivity extends AppCompatActivity {
         bt_registrarse.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                String contrasena = et_contrasena.getText().toString();
+                String confirmarContrasena = et_confirmar_contrasena.getText().toString();
+
+                if (contrasena.isEmpty()) {
+                    et_contrasena.setError("La contraseña no puede estar vacía");
+                    return;
+                }
+
+                if (!contrasena.equals(confirmarContrasena)) {
+                    et_confirmar_contrasena.setError("Las contraseñas no coinciden");
+                    Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
                 JSONObject requestBody = new JSONObject();
                 try{
                     requestBody.put("username", et_usuario.getText().toString());
                     requestBody.put("nombre", et_nombre.getText().toString());
                     requestBody.put("empresa", et_empresa.getText().toString());
                     requestBody.put("email", et_correo.getText().toString());
-                    requestBody.put("password", et_contrasena.getText().toString());
-                    requestBody.put("confirm_password", et_confirmar_contrasena.getText().toString());
+                    requestBody.put("password", contrasena);
+                    requestBody.put("confirm_password", confirmarContrasena);
 
                     SendRequestsForLoginOrRegister sendRequestsForLoginOrRegister = new SendRequestsForLoginOrRegister();
                     sendRequestsForLoginOrRegister.sendPostRequest(context, url, requestBody, onResponse);

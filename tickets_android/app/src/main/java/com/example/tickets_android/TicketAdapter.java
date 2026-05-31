@@ -14,6 +14,16 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
 
     private List<Ticket> tickets;
 
+    public interface OnItemClickListener {
+        void onItemClick(Ticket ticket);
+    }
+
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     public TicketAdapter(List<Ticket> tickets) {
         this.tickets = tickets;
     }
@@ -37,6 +47,12 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
         holder.empresa.setText(ticket.getEmpresa());
         holder.contacto.setText(ticket.getContacto());
         holder.fecha_creacion.setText(ticket.getFecha());
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(ticket);
+            }
+        });
     }
 
     @Override

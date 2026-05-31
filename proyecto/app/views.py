@@ -34,8 +34,8 @@ def perfil(request):
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
     
-    # Obtener los tickets del usuario
-    tickets = Ticket.objects.filter(contacto=authenticated_user.username, empresa=authenticated_user.empresa)
+    # Obtener los tickets del usuario usando la FK idUsuario
+    tickets = Ticket.objects.filter(idUsuario=authenticated_user)
     
     return render(request, 'perfil.html', {
         'user': authenticated_user,
@@ -75,12 +75,10 @@ def ticket_w(request):
 
         if authenticated_user is None:
             return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
-            
 
         try:
             ticket = Ticket.objects.create(
-                empresa=authenticated_user.empresa,
-                contacto=authenticated_user.username,
+                idUsuario=authenticated_user,
                 tipo_dispositivo=request.POST.get("tipo_dispositivo"),
                 id_dispositivo=request.POST.get("id_dispositivo"),
                 observaciones=request.POST.get("observaciones"),
@@ -101,7 +99,7 @@ def ticket_w(request):
             }, status=400)
 
     else:
-        return JsonResponse({"message": "Método no permitido"}, status= 405)
+        return JsonResponse({"message": "Método no permitido"}, status=405)
 
 
 
@@ -112,7 +110,7 @@ def registar_usuario_w(request):
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
         nombre = request.POST.get("nombre")
-        empresa = request.POST.get("empresa")
+        empresa_nombre = request.POST.get("empresa")
         correo = request.POST.get("correo")
 
         if password != confirm_password:
@@ -132,6 +130,12 @@ def registar_usuario_w(request):
                     'error': 'El correo electrónico ya está en uso'
                 })
 
+            # Obtener o crear la empresa
+            empresa_obj, _ = Empresa.objects.get_or_create(
+                nombre=empresa_nombre,
+                defaults={'encargado': username}
+            )
+
             hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
             random_token = secrets.token_hex(16)
 
@@ -139,7 +143,7 @@ def registar_usuario_w(request):
                 username=username,
                 password=hashed_password,
                 nombre=nombre,
-                empresa=empresa,
+                empresa=empresa_obj,
                 correo=correo,
                 token_sesion=random_token,
             )
@@ -177,17 +181,10 @@ def iniciar_sesion(request):
                 
                 return HttpResponseRedirect('/perfil/')
             
-            if password != Usuario.objects.get(username=username).password:
-                return render(request, 'login.html', {
-                    'error': 'Usuario o contraseña incorrectos'
-                })
-            
             else:
                 return render(request, 'login.html', {
                     'error': 'Usuario o contraseña incorrectos'
                 })
-        
-            
             
         except Usuario.DoesNotExist:
             return render(request, 'login.html', {
@@ -227,11 +224,11 @@ def tickets_usuario(request):
         if authenticated_user is None:
             return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
 
-        tickets = Ticket.objects.filter(contacto=authenticated_user.username, empresa=authenticated_user.empresa).values()  # Filtra por contacto y empresa del usuario autenticado
+        tickets = Ticket.objects.filter(idUsuario=authenticated_user).values()
         return JsonResponse(list(tickets), safe=False, status=200)
 
     else:
-        return JsonResponse({"message": "Método no permitido"}, status= 405)
+        return JsonResponse({"message": "Método no permitido"}, status=405)
 
 
 # Tickets por id (para poder modificarlos si es necesario)
@@ -246,7 +243,7 @@ def ticket_id(request, ticket_id):
     try:
         ticket = Ticket.objects.get(id=ticket_id)
         # Verificar que el ticket pertenece al usuario
-        if ticket.contacto != authenticated_user.username or ticket.empresa != authenticated_user.empresa:
+        if ticket.idUsuario != authenticated_user:
             if request.method == 'GET':
                 return render(request, 'ticket.html', {'error': 'No tienes permiso para ver este ticket'})
             else:
@@ -278,8 +275,6 @@ def ticket_id(request, ticket_id):
 
     elif request.method == 'PUT':
         data = json.loads(request.body)
-        ticket.empresa = data.get("empresa", ticket.empresa)
-        ticket.contacto = data.get("contacto", ticket.contacto)
         ticket.tipo_dispositivo = data.get("tipo_dispositivo", ticket.tipo_dispositivo)
         ticket.id_dispositivo = data.get("id_dispositivo", ticket.id_dispositivo)
         ticket.observaciones = data.get("observaciones", ticket.observaciones)
@@ -291,4 +286,3 @@ def ticket_id(request, ticket_id):
 
     else:
         return JsonResponse({"message": "Método no permitido"}, status=405)
-        

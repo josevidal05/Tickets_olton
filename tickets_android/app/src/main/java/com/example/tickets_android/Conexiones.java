@@ -2,7 +2,7 @@ package com.example.tickets_android;
 
 public class Conexiones {
     // Aquí puedes cambiar la URL base una sola vez para toda la aplicación
-    public static final String BASE_URL = "http://192.168.0.151:8000";
+    public static final String BASE_URL = "http://10.0.2.2:8000";
 
     // Endpoints específicos para cada funcionalidad
 

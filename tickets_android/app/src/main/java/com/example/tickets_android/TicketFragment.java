@@ -1,4 +1,7 @@
-package com.example.tickets_android;import android.content.Context;
+package com.example.tickets_android;
+
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -70,6 +73,17 @@ public class TicketFragment extends Fragment {
                             } else {
                                 adapter.updateTickets(ticketlists.getTicketList());
                             }
+
+                            // Configurar el click listener
+                            adapter.setOnItemClickListener(new TicketAdapter.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(Ticket ticket) {
+                                    Intent intent = new Intent(context, Ticket_idActivity.class);
+                                    intent.putExtra("ticket_id", ticket.getId());
+                                    startActivity(intent);
+                                }
+                            });
+
                         } catch (Exception e) {
                             e.printStackTrace();
                             Toast.makeText(context, "Error al procesar los datos de tickets", Toast.LENGTH_SHORT).show();

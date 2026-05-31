@@ -41,5 +41,28 @@ public class Ticket {
     public String getArchivo() { return archivo; }
     public String getPortes() { return portes; }
     public String getTransporte() { return transporte; }
-    public String getFecha() { return fecha; }
+    public String getFecha() { return formatearFechaSoloDia(fecha); }
+
+    public static String formatearFechaSoloDia(String fechaCompleta) {
+        if (fechaCompleta == null || fechaCompleta.isEmpty()) {
+            return "";
+        }
+        // Si contiene una 'T' (formato ISO 8601), nos quedamos con la parte antes de la 'T'
+        if (fechaCompleta.contains("T")) {
+            fechaCompleta = fechaCompleta.split("T")[0];
+        }
+        // Si contiene un espacio (ej: '2026-05-31 15:20:41'), nos quedamos con la primera parte
+        else if (fechaCompleta.contains(" ")) {
+            fechaCompleta = fechaCompleta.split(" ")[0];
+        }
+        
+        // Si está en formato yyyy-MM-dd, lo reformateamos a dd/MM/yyyy para que sea más legible
+        if (fechaCompleta.contains("-")) {
+            String[] partes = fechaCompleta.split("-");
+            if (partes.length == 3) {
+                return partes[2] + "/" + partes[1] + "/" + partes[0];
+            }
+        }
+        return fechaCompleta;
+    }
 }

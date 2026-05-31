@@ -41,7 +41,7 @@ public class LoginActivity extends AppCompatActivity {
         }
         
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_login);
+        setContentView(R.layout.activity_login);
 
         editTextUsuario = findViewById(R.id.inisesusuario);
         editTextContrasena = findViewById(R.id.inisescontrasena);

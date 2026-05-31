@@ -4,16 +4,12 @@ plugins {
 
 android {
     namespace = "com.example.tickets_android"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36 // Complies with newer AndroidX dependencies requiring SDK 36
 
     defaultConfig {
         applicationId = "com.example.tickets_android"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35 // Match compileSdk
         versionCode = 1
         versionName = "1.0"
 

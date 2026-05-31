@@ -84,16 +84,27 @@ public class PerfilFragment extends Fragment {
         }
     }
 
-    private void cerrarSesion(){
-        SharedPreferences userPrefs = requireContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
-        userPrefs.edit().clear().apply();
+    private void cerrarSesion() {
+        // 1. Llamar al endpoint de logout para invalidar el token en el servidor
+        String logoutUrl = Conexiones.LOGOUT;
+        JsonObjectRequestWithCustomAuth logoutRequest = new JsonObjectRequestWithCustomAuth(
+                com.android.volley.Request.Method.POST, logoutUrl, null,
+                response -> {}, // ignoramos la respuesta
+                error -> {},    // ignoramos el error (de todas formas limpiamos sesión local)
+                requireContext()
+        );
+        Volley.newRequestQueue(requireContext()).add(logoutRequest);
 
-        SharedPreferences authPrefs = requireContext().getSharedPreferences("SESSIONS_APP_PREFS", Context.MODE_PRIVATE);
-        authPrefs.edit().clear().apply();
+        // 2. Limpiar todas las SharedPreferences de sesión
+        requireContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE)
+                .edit().clear().apply();
+        requireContext().getSharedPreferences("SESSIONS_APP_PREFS", Context.MODE_PRIVATE)
+                .edit().clear().apply();
 
-        if (getActivity() != null) {
-            getActivity().finish();
-        }
+        // 3. Ir a LoginActivity limpiando el back stack (no se puede volver atrás)
+        Intent intent = new Intent(requireContext(), LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 
     private void irAMisDatos(){

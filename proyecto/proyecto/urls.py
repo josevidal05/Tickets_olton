@@ -43,6 +43,7 @@ urlpatterns = [
     path("android/tickets/", views_ad.ticket_ad),
     path("android/tickets/<int:ticket_id>/", views_ad.ticket_id_ad),
     path("android/tickets_usuario/", views_ad.tickets_usuario_ad),
+    path("android/perfil/", views_ad.perfil_ad),
 ]
 
 
