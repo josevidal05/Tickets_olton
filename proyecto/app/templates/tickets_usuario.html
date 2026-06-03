@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} Tickets {% endblock %}
+
+{% block head %}
+
+<link rel="stylesheet" href="{% static 'css/tickets_usuario.css' %}">
+<link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
+<link rel="icon" href="{% static 'img/olton.png' %}">
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="titulo">
+    <h1>Mis tickets</h1>
+
+</div>
+
+<div class="tabla_tickets">
+    <table>
+        <tr class="cabecera_tabla">
+            <th>ID</th>
+            <th>Empresa</th>
+            <th>Usuario</th>
+            <th>Fecha</th>
+        </tr>
+        {% for ticket in tickets %}
+        <tr class="fila_tabla" onclick="window.location='/ticket/{{ ticket.id }}/';" style="cursor:pointer;">
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.idUsuario.empresa.nombre }}</td>
+            <td>{{ ticket.idUsuario.username }}</td>
+            <td>{{ ticket.fecha_creacion }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

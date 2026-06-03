@@ -21,12 +21,25 @@ def comprobar_tickets(request):
         return HttpResponseRedirect('/login/')
     return render(request, 'comprobar_tickets.html')
 
+def tickets_usuario(request):
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+
+    tickets = Ticket.objects.filter(idUsuario=authenticated_user)
+    return render(request, 'tickets_usuario.html', {
+        'user': authenticated_user,
+        'tickets': tickets
+    })
+
 def login(request):
     # Si el usuario ya está logueado, redirigir a perfil
     authenticated_user = __get_request_user(request)
     if authenticated_user is not None:
         return HttpResponseRedirect('/perfil/')
     return render(request, 'login.html')
+
 
 def perfil(request):
     # Verificar si el usuario está autenticado
@@ -216,7 +229,7 @@ def logout(request):
 
 
 # Tickets de cada usuario
-def tickets_usuario(request):
+def tickets_user(request):
     if request.method == 'GET':
 
         authenticated_user = __get_request_user(request)

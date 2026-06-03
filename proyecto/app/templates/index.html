@@ -1,112 +1,95 @@
+{% extends 'base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
 
-<html>
-
-<head>
-
-    <title>Tickets</title>
-
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
-    <link rel="icon" href="{% static 'img/olton.png' %}">
-
-</head>
+{% block title %}Tickets{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
+<link rel="icon" href="{% static 'img/olton.png' %}">
 
 
-<body>
+{% endblock %}
 
-    <div class="cabecera">
-        <a href="/">
-            <img src="{% static 'img/sistemas olton.png' %}" alt="logo" class="logo_cabecera">
-        </a>
+{% block content %}
 
-        
-        <a href="perfil/">            
-            <svg class="user_cabecera" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
-                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
-            </svg>
-        </a>
+<div class="titulo">
+    <h1>Tickets</h1>
+    <h4>Rellene el formulario</h4>
+
+</div>
+
+
+
+<form method="POST" action="#">
+
+    <div class="empresa">
+        <p>Empresa:</p>
+        <input type="text" name="empresa" value="{{ user.empresa }}" readonly required>
     </div>
 
-    <div class="titulo">
-        <h1>Tickets</h1>
-        <h4>Rellene el formulario</h4>
-        
+    <div class="contacto">
+        <p>Contacto:</p>
+        <input type="text" name="contacto" value="{{ user.username }}" readonly required>
     </div>
 
+    <div class="tipo_dispositivo">
+        <p>Tipo de dispositivo:</p>
+        <select name="tipo_dispositivo" required>
+            <option value="maquina">Máquina</option>
+            <option value="tracker">Tracker</option>
+            <option value="otro">Otro</option>
+        </select>
+    </div>
 
+    <div class="id_dispositivo">
+        <p>ID dispositivo:</p>
+        <input type="number" name="id_dispositivo" required>
+    </div>
 
-    <form method="POST" action="#">
+    <div class="observaciones">
+        <p>Observaciones:</p>
+        <textarea name="observaciones" rows="4" required></textarea>
+        <!-- Subir archivo -->
+        <input type="file" class="subir_archivo" name="archivo" accept="image/*">
 
-        <div class="empresa">
-            <p>Empresa:</p>
-            <input type="text" name="empresa" value="{{ user.empresa }}" readonly required>
-        </div>
+    </div>
 
-        <div class="contacto">
-            <p>Contacto:</p>
-            <input type="text" name="contacto" value="{{ user.nombre }}" readonly required>
-        </div>
+    <div class="portes">
+        <p>Portes:</p>
+        <select name="portes" required>
+            <option value="debido">Debido</option>
+            <option value="pagado">Pagado</option>
+        </select>
+    </div>
 
-        <div class="tipo_dispositivo">
-            <p>Tipo de dispositivo:</p>
-            <select name="tipo_dispositivo" required>
-                <option value="maquina">Máquina</option>
-                <option value="tracker">Tracker</option>
-                <option value="otro">Otro</option>
-            </select>
-        </div>
+    <div class="transporte">
+        <p>Empresa de transporte:</p>
+        <input type="text" name="transporte" required>
+    </div>
 
-        <div class="id_dispositivo">
-            <p>ID dispositivo:</p>
-            <input type="number" name="id_dispositivo" required>
-        </div>
+    <button type="submit">Enviar Ticket</button>
+</form>
 
-        <div class="observaciones">
-            <p>Observaciones:</p>
-            <textarea name="observaciones" rows="4" required></textarea>
-            <!-- Subir archivo -->
-            <input type="file" class="subir_archivo" name="archivo" accept="image/*">
-
-        </div>
-
-        <div class="portes">
-            <p>Portes:</p>
-            <select name="portes" required>
-                <option value="debido">Debido</option>
-                <option value="pagado">Pagado</option>
-            </select>
-        </div>
-
-        <div class="transporte">
-            <p>Empresa de transporte:</p>
-            <input type="text" name="transporte" required>
-        </div>
-
-        <button type="submit">Enviar Ticket</button>
-    </form>
-
-    <script>
-        document.querySelector('form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const fileInput = document.querySelector('input[name="archivo"]');
-            const file = fileInput.files[0];
-            if (file) {
-                const extension = file.name.split('.').pop().toLowerCase();
-                const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-                if (!allowedExtensions.includes(extension)) {
-                    alert('Formato de archivo inválido');
-                    return;
-                }
+<script>
+    document.querySelector('form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const fileInput = document.querySelector('input[name="archivo"]');
+        const file = fileInput.files[0];
+        if (file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+            if (!allowedExtensions.includes(extension)) {
+                alert('Formato de archivo inválido');
+                return;
             }
-            const formData = new FormData(this);
-            fetch('/tickets/', {
-                method: 'POST',
-                body: formData
-            })
-            
+        }
+        const formData = new FormData(this);
+        fetch('/tickets/', {
+            method: 'POST',
+            body: formData
+        })
+
             .then(response => {
                 if (!response.ok) {
                     throw new Error('HTTP ' + response.status + ': ' + response.statusText);
@@ -121,9 +104,7 @@
                 console.error('Error:', error);
                 alert('Error al crear ticket: ' + error.message);
             });
-        });
-    </script>
+    });
+</script>
 
-</body>
-
-</html>
+{% endblock %}

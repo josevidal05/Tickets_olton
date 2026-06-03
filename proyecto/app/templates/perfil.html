@@ -2,61 +2,44 @@
  comprobar los tickets que ha subido con su perfil, y cerrar sesión
  de usuario.
 -->
-
+{% extends 'base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html>
+{% block title %}Mi cuenta{% endblock %}
 
-<head>
-    <title>Mi cuenta</title>
-    <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
-    <link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
-    <link rel="icon" href="{% static 'img/olton.png' %}">
-</head>
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/perfil.css' %}">
+{% endblock %}
 
 
-<body>
+{% block content %}
 
-    <div class="cabecera">
-        <a href="/">
-            <img src="{% static 'img/sistemas olton.png' %}" alt="logo" class="logo_cabecera">
-        </a>
-                <a href="/perfil/">
-            <svg class="user_cabecera" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                class="bi bi-person" viewBox="0 0 16 16">
-                <path
-                    d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
-            </svg>
-        </a>
+
+<h1>Mi cuenta</h1>
+
+<div class="perfil">
+    <div class="datos">
+        <h2>Datos personales</h2>
+        <p>Nombre de usuario: {{ user.username }}</p>
+        <p>Nombre: {{ user.nombre }}</p>
+        <p>Empresa: {{ user.empresa }}</p>
+        <p>Correo electrónico: {{ user.correo }}</p>
     </div>
-    
-    <h1>Mi cuenta</h1>
 
-    <div class="perfil">
-        <div class="datos">
-            <h2>Datos personales</h2>
-            <p>Nombre de usuario: {{ user.username }}</p>
-            <p>Nombre: {{ user.nombre }}</p>
-            <p>Empresa: {{ user.empresa }}</p>
-            <p>Correo electrónico: {{ user.correo }}</p>
-        </div>
-
+    <!-- TICKETS DEL USUARIO
         <div class="tickets">
             <h2>Mis tickets</h2>
             <ul>
                 {% for ticket in tickets %}
-                <li><a href="/ticket/{{ ticket.id }}/">Ticket #{{ ticket.id }} - {{ ticket.empresa }}</a></li>
+                <li><a href="/ticket/{{ ticket.id }}/">Ticket #{{ ticket.id }} - {{ ticket.tipo_dispositivo }}</a></li>
                 {% empty %}
                 <li>No has subido ningún ticket aún.</li>
                 {% endfor %}
             </ul> 
         </div>
+        -->
+    <div class="cerrar-sesion">
+        <a href="{% url 'logout' %}"><button>Cerrar sesión</button></a>
+    </div>
 
-        <div class="cerrar-sesion">
-            <a href="{% url 'logout' %}"><button>Cerrar sesión</button></a>
-        </div>
-
-</body>
-
-</html>
+{% endblock %}

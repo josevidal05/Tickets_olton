@@ -1,0 +1,39 @@
+
+h1{
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.tabla_tickets {
+    width: 90%;
+    margin: 0 auto;
+    overflow-x: auto;
+}
+
+table{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+.cabecera_tabla{
+    background-color: #999999;
+}
+
+.cabecera_tabla th,
+.fila_tabla td {
+    padding: 12px 10px;
+    text-align: left;
+}
+
+th {
+    color: white;
+}
+
+.fila_tabla:nth-child(even) {
+    background-color: #f7f7f7;
+}
+
+.fila_tabla:hover {
+    background-color: #ececec;
+}
