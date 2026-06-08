@@ -1,19 +1,4 @@
-
-
-h1{
-    font-size: 40px;
-}
-
-h4{
-    font-size: 25px;
-}
-
-.titulo img{
-    width: 150px;
-    height: 150px;
-}
-
-form {
+.datos-usuario {
     display: flex;
     flex-direction: column;
     text-align: center;
@@ -23,50 +8,38 @@ form {
     border-radius: 25px;
     padding: 20px;
     background-color: #f0f0f0;
-    width: 80%;
+    width: 70%;
     margin: 0 auto 30px auto;
 }
 
-form div {
+/* Campos del formulario */
+.datos-usuario div {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
     margin-bottom: 10px;
     width: 100%;
     text-align: left;
 }
 
-form div p {
+.datos-usuario div p:first-child {
     margin: 10px 0px;
     font-weight: bold;
     font-size: 18px;
 }
 
-textarea, input, select, .subir_archivo{
-    padding: 10px 0px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+.datos-usuario a{
     width: 100%;
-}
-
-.observaciones {
-    flex-direction: column;
-}
-
-.observaciones .subir_archivo{
-    margin: 5px 0px;
-    border: none;
-}
-
-form button{
-    padding: 5px 40px;
+    margin: 5px;
     font-size: 18px;
     background-color: rgb(0, 89, 255);
     color: white;
     border: none;
     border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 20px;
+    padding: 5px 0px;
+    text-decoration: none;
 }
 
+.editar {
+    margin-top: 30px;
+}

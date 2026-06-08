@@ -1,4 +1,5 @@
 import secrets
+from urllib import request
 import bcrypt
 
 from django.http import JsonResponse, HttpResponseRedirect
@@ -6,6 +7,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 import json
 from .models import Ticket, Usuario, Empresa
+
+# DOCUMENTOS HMTL
 
 def index(request):
     # Verificar si el usuario está autenticado
@@ -57,6 +60,24 @@ def perfil(request):
 
 def registro(request):
     return render(request, 'registro.html')
+
+def datos_usuario(request):
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    
+    return render(request, 'datos_usuario.html', {
+        'user': authenticated_user
+    })
+
+
+
+
+
+# MÉTODOS
+
+# Función para obtener el usuario autenticado 
 
 def __get_request_user(request):
     # Primero intentar obtener el token del header (para APIs/Android)
@@ -246,6 +267,7 @@ def tickets_user(request):
 
 # Tickets por id (para poder modificarlos si es necesario)
 def ticket_id(request, ticket_id):
+
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         if request.method == 'GET':
@@ -296,6 +318,64 @@ def ticket_id(request, ticket_id):
         ticket.save()
         
         return JsonResponse({"success": True}, status=200)
+
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
+def perfil_usuario (request):
+    authenticated_user = __get_request_user(request)
+    
+    if authenticated_user is None:
+        return JsonResponse({"error": "El token de sesión no es válido o no se ha enviado"}, status=401)
+
+
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return JsonResponse({"error": "JSON inválido"}, status=400)
+
+        username = data.get("username")
+        nombre = data.get("nombre")
+        empresa_nombre = data.get("empresa")
+        correo = data.get("correo")
+        password = data.get("password")
+
+        if username == "" or correo == "" or nombre == "" or empresa_nombre == "":
+            return JsonResponse({"error": "No se han proporcionado campos para actualizar"}, status=400)
+
+        # Validación de campos únicos excluyendo al usuario actual
+        if username:
+            if Usuario.objects.filter(username=username).exclude(id=authenticated_user.id).exists():
+                return JsonResponse({"error": "El nombre de usuario ya existe"}, status=409)
+            authenticated_user.username = username
+
+        if correo:
+            if Usuario.objects.filter(correo=correo).exclude(id=authenticated_user.id).exists():
+                return JsonResponse({"error": "El correo electrónico ya está en uso"}, status=409)
+            authenticated_user.correo = correo
+
+        if nombre is not None:
+            authenticated_user.nombre = nombre
+
+        if empresa_nombre is not None:
+            # Obtener o crear la empresa por nombre
+            empresa_obj, _ = Empresa.objects.get_or_create(
+                nombre=empresa_nombre,
+                defaults={'encargado': authenticated_user.username}
+            )
+            authenticated_user.empresa = empresa_obj
+
+        if password and password.strip() != "":
+            hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
+            authenticated_user.password = hashed_password
+
+        try:
+            authenticated_user.save()
+            return JsonResponse({"success": True}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
     else:
         return JsonResponse({"message": "Método no permitido"}, status=405)

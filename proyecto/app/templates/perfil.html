@@ -17,29 +17,28 @@
 
 <h1>Mi cuenta</h1>
 
-<div class="perfil">
-    <div class="datos">
-        <h2>Datos personales</h2>
-        <p>Nombre de usuario: {{ user.username }}</p>
-        <p>Nombre: {{ user.nombre }}</p>
-        <p>Empresa: {{ user.empresa }}</p>
-        <p>Correo electrónico: {{ user.correo }}</p>
-    </div>
+<div class="opciones">
 
-    <!-- TICKETS DEL USUARIO
-        <div class="tickets">
-            <h2>Mis tickets</h2>
-            <ul>
-                {% for ticket in tickets %}
-                <li><a href="/ticket/{{ ticket.id }}/">Ticket #{{ ticket.id }} - {{ ticket.tipo_dispositivo }}</a></li>
-                {% empty %}
-                <li>No has subido ningún ticket aún.</li>
-                {% endfor %}
-            </ul> 
+    <a href="/datos_usuario" class="mis_datos">
+        <div class="contenido_a">
+            <p>Mis datos</p>
+            <p>></p>
         </div>
-        -->
-    <div class="cerrar-sesion">
-        <a href="{% url 'logout' %}"><button>Cerrar sesión</button></a>
-    </div>
+
+    </a>
+
+    <hr>
+
+    <a href="/tickets_usuario" class="mis_tickets">
+        <div class="contenido_a">
+            <p>Mis tickets</p>
+            <p>></p>
+        </div>
+    </a>
+</div>
+
+<div class="cerrar-sesion">
+    <a href="{% url 'logout' %}"><button>Cerrar sesión</button></a>
+</div>
 
 {% endblock %}

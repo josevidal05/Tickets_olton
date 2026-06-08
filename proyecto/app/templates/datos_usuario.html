@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis datos{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/datos_usuario.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Mis datos</h1>
+
+<div class="datos-usuario">
+        {% csrf_token %}
+
+        <div class="username">
+            <p>Nombre de usuario:</p>
+            <p >{{ user.username }}</p>
+            <input type="text" name="username" value="{{ user.username }}" required hidden>
+        </div>
+
+        <div class="nombre">
+            <p>Nombre:</p>
+            <p>{{ user.nombre }}</p>
+            <input type="text" name="nombre" value="{{ user.nombre }}" required hidden>
+        </div>
+
+        <div class="empresa">
+            <p>Empresa:</p>
+            <p>{{ user.empresa }}</p>
+            <input type="text" name="empresa" value="{{ user.empresa }}" required hidden>
+        </div>
+
+        <div class="correo"> 
+            <p>Correo electrónico:</p>
+            <p>{{ user.correo }}</p>
+            <input type="text" name="correo" value="{{ user.correo }}" required hidden>
+        </div>
+
+        <div class="password" hidden>
+            <p hidden>Contraseña:</p>
+            <input type="password" name="password" required hidden>
+        </div>
+
+        <div class="confirm_password" hidden>
+            <p hidden>Confirmar contraseña:</p>
+            <input type="password" name="confirm_password" required hidden>
+        </div>
+
+        <a href="#" class="editar">Editar</a>
+        
+        <a href="/perfil" class="volver">Volver</a>
+    </div>
+
+    <script>
+    const datosUsuarioDiv = document.querySelector('.datos-usuario');
+    const editarLink = datosUsuarioDiv.querySelector('.editar');
+    const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+
+    function getInputValue(selector) {
+        const input = datosUsuarioDiv.querySelector(selector);
+        return input ? input.value.trim() : '';
+    }
+
+    function setEditingMode(editing) {
+        const textFields = ['.username', '.nombre', '.empresa', '.correo'];
+        textFields.forEach(fieldClass => {
+            const container = datosUsuarioDiv.querySelector(fieldClass);
+            const text = container.querySelector('p:nth-child(2)');
+            const input = container.querySelector('input');
+            if (text && input) {
+                text.style.display = editing ? 'none' : 'block';
+                input.style.display = editing ? 'block' : 'none';
+            }
+        });
+
+        const passwordContainer = datosUsuarioDiv.querySelector('.password');
+        const confirmPasswordContainer = datosUsuarioDiv.querySelector('.confirm_password');
+        const passwordLabel = passwordContainer.querySelector('p');
+        const passwordInput = passwordContainer.querySelector('input');
+        const confirmPasswordLabel = confirmPasswordContainer.querySelector('p');
+        const confirmPasswordInput = confirmPasswordContainer.querySelector('input');
+
+        if (editing) {
+            passwordLabel.hidden = false;
+            passwordInput.hidden = false;
+            passwordInput.style.display = 'block';
+            confirmPasswordLabel.hidden = false;
+            confirmPasswordInput.hidden = false;
+            confirmPasswordInput.style.display = 'block';
+        } else {
+            passwordLabel.hidden = true;
+            passwordInput.hidden = true;
+            passwordInput.style.display = 'none';
+            confirmPasswordLabel.hidden = true;
+            confirmPasswordInput.hidden = true;
+            confirmPasswordInput.style.display = 'none';
+        }
+    }
+
+    function showError(message) {
+
+        alert(message);
+    }
+
+    function clearError() {
+        const errorEl = datosUsuarioDiv.querySelector('.error-message');
+        if (errorEl) {
+            errorEl.remove();
+        }
+    }
+
+    async function guardarCambios() {
+        clearError();
+
+        const username = getInputValue('input[name="username"]');
+        const nombre = getInputValue('input[name="nombre"]');
+        const empresa = getInputValue('input[name="empresa"]');
+        const correo = getInputValue('input[name="correo"]');
+        const password = getInputValue('input[name="password"]');
+        const confirmPassword = getInputValue('input[name="confirm_password"]');
+
+        if (password && password !== confirmPassword) {
+            showError('Las contraseñas no coinciden.');
+            return;
+        }
+
+        const payload = {
+            username,
+            nombre,
+            empresa,
+            correo,
+            password
+        };
+
+        try {
+            const response = await fetch('/perfil_usuario/', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfTokenInput ? csrfTokenInput.value : ''
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                showError(data.error || data.message || 'No se pudieron guardar los cambios.');
+                return;
+            }
+
+            alert('Datos guardados correctamente.');
+            window.location.reload();
+        } catch (error) {
+            showError('Error al guardar los datos.');
+            console.error(error);
+        }
+    }
+
+    editarLink.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        const isEditing = editarLink.dataset.editing === 'true';
+        if (!isEditing) {
+            setEditingMode(true);
+            editarLink.textContent = 'Guardar';
+            editarLink.dataset.editing = 'true';
+            return;
+        }
+
+        guardarCambios();
+    });
+
+    setEditingMode(false);
+    </script>
+
+{% endblock %}

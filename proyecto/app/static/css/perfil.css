@@ -2,30 +2,30 @@ h1 {
     font-size: 40px;
 }
 
-h4 {
-    font-size: 25px;
-}
-
-.titulo img {
-    width: 150px;
-    height: 150px;
-}
-
-li {
-    list-style: none;
+.opciones {
+    width: 80%;
     margin: 0 auto;
 }
 
-ul {
+.opciones a {
+    text-decoration: none;
+    color: black;
+    font-size: 20px;
+    margin: 0px 0px;
+}
+
+.contenido_a {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
-    padding: 0;
+    padding: 10px 20px;
 }
 
 .cerrar-sesion a button {
+    margin-top: 30px;
     padding: 10px 20px;
     color: red;
     font-weight: bold;
+    font-size: 16px;
 }

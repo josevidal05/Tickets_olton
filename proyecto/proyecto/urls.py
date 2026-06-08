@@ -26,15 +26,18 @@ urlpatterns = [
     path('', views.index),
     path('gestion/', views.comprobar_tickets),
     path('tickets_usuario/', views.tickets_usuario),
+    path('datos_usuario/', views.datos_usuario),
     path('login/', views.login),
     path('iniciar_sesion/', views.iniciar_sesion, name='iniciar_sesion'),
     path('logout/', views.logout, name='logout'),
     path('admin/', admin.site.urls),
+    path("perfil/", views.perfil),
+
 
 
     path("tickets/", views.ticket_w),
     path("ticket/<int:ticket_id>/", views.ticket_id),
-    path("perfil/", views.perfil),
+    path("perfil_usuario/", views.perfil_usuario),
     path("registro/", views.registro),
     path("registrar_usuario/", views.registar_usuario_w, name='registrar_usuario_w'),
     #path("tickets_usuario/", views.tickets_user), # para ver todos los tickets del usuario, esta en json
