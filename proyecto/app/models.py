@@ -4,7 +4,6 @@ from django.core.validators import FileExtensionValidator
 import mimetypes
 
 # Create your models here.
-
 def validate_image_file(value):
     if not value:
         return
@@ -79,6 +78,12 @@ class Ticket(models.Model):
         ('abierto', 'Abierto'),
         ('cerrado', 'Cerrado'),
     ]
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_TICKET_CHOICES,
+        default='no leido'
+    )
 
     idUsuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='tickets')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
