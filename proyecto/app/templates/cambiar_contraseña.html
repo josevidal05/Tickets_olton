@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cambiar contraseña{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/datos_usuario.css' %}">
+<link rel="stylesheet" href="{% static 'css/cambiar_contraseña.css' %}">
+<!-- No modal: use browser confirm() -->
+{% endblock %}
+
+{% block content %}
+<h1>Cambiar contraseña</h1>
+
+<div class="datos-usuario">
+    {% csrf_token %}
+
+    <div class="contrasena_actual">
+        <p>Contraseña actual:</p>
+        <input type="password" name="contrasena_actual" required >
+    </div>
+
+    <div class="contrasena_nueva">
+        <p>Nueva contraseña</p>
+        <input type="password" name="contrasena_nueva" required >
+    </div>
+
+    <div class="contrasena_nueva_confirmar">
+        <p>Confirmar nueva contraseña:</p>
+        <input type="password" name="contrasena_nueva_confirmar" required >
+    </div>
+
+    <a href="#" class="editar">Editar</a>
+    
+    <a href="/datos_usuario/" class="volver">Volver</a>
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    const editarBtn = document.querySelector('.editar');
+
+    editarBtn.addEventListener('click', function(e){
+        e.preventDefault();
+
+        const confirmed = confirm('¿Estás seguro de que quieres modificar la contraseña?');
+        if (!confirmed) return;
+
+        // gather values
+        const contrasena_actual = document.querySelector('input[name="contrasena_actual"]').value;
+        const contrasena_nueva = document.querySelector('input[name="contrasena_nueva"]').value;
+        const contrasena_nueva_confirmar = document.querySelector('input[name="contrasena_nueva_confirmar"]').value;
+
+        // basic client-side validation
+        if (!contrasena_actual || !contrasena_nueva || !contrasena_nueva_confirmar) {
+            alert('Por favor rellena todos los campos.');
+            return;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        fetch('/perfil_usuario/editar_contraseña/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                contrasena_actual: contrasena_actual,
+                contrasena_nueva: contrasena_nueva,
+                contrasena_nueva_confirmar: contrasena_nueva_confirmar
+            })
+        })
+        .then(r => r.json().then(body => ({status: r.status, body})))
+        .then(({status, body}) => {
+            if (status >= 200 && status < 300 && body.success) {
+                alert('Contraseña modificada correctamente.');
+                window.location.href = '/perfil/';
+            } else {
+                alert(body.error || 'Error al modificar la contraseña.');
+            }
+        })
+        .catch(err => {
+            alert('Error de red.');
+            console.error(err);
+        });
+    });
+});
+</script>
+
+{% endblock %}

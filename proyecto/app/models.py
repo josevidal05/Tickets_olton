@@ -19,6 +19,7 @@ def validate_image_file(value):
 class Empresa(models.Model):
     nombre = models.CharField(max_length=150, unique=True)
     encargado = models.CharField(max_length=100)
+    numero_tickets = models.IntegerField(default=0)
 
     def __str__(self):
         return self.nombre

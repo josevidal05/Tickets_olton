@@ -74,6 +74,12 @@ def ticket_ad(request):
         else:
             portes = 'debido'
 
+        if id_dispositivo is isinstance(id_dispositivo, str):
+            return JsonResponse({"success": False, "error": "El ID del dispositivo debe ser un número entero"}, status=400)
+        
+        if id_dispositivo < 1:
+            return JsonResponse ({"success": False, "error": "El ID del dispositivo tiene que ser mayor que 0"}, status=400)
+        
         try:
             ticket = Ticket.objects.create(
                 idUsuario=authenticated_user,

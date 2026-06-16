@@ -37,14 +37,8 @@
             <input type="text" name="correo" value="{{ user.correo }}" required hidden>
         </div>
 
-        <div class="password" hidden>
-            <p hidden>Contraseña:</p>
-            <input type="password" name="password" required hidden>
-        </div>
-
-        <div class="confirm_password" hidden>
-            <p hidden>Confirmar contraseña:</p>
-            <input type="password" name="confirm_password" required hidden>
+        <div class="password" >
+            <a href="cambiar_contraseña/" class="enlace_password">Cambiar contraseña</a>
         </div>
 
         <a href="#" class="editar">Editar</a>
@@ -55,51 +49,77 @@
     <script>
     const datosUsuarioDiv = document.querySelector('.datos-usuario');
     const editarLink = datosUsuarioDiv.querySelector('.editar');
+    const volverLink = datosUsuarioDiv.querySelector('.volver');
     const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+
+    const originalData = {
+        username: getInputValue('input[name="username"]'),
+        nombre: getInputValue('input[name="nombre"]'),
+        empresa: getInputValue('input[name="empresa"]'),
+        correo: getInputValue('input[name="correo"]')
+    };
 
     function getInputValue(selector) {
         const input = datosUsuarioDiv.querySelector(selector);
         return input ? input.value.trim() : '';
     }
 
+    function restoreOriginalValues() {
+        const usernameInput = datosUsuarioDiv.querySelector('input[name="username"]');
+        const nombreInput = datosUsuarioDiv.querySelector('input[name="nombre"]');
+        const empresaInput = datosUsuarioDiv.querySelector('input[name="empresa"]');
+        const correoInput = datosUsuarioDiv.querySelector('input[name="correo"]');
+
+        if (usernameInput) usernameInput.value = originalData.username;
+        if (nombreInput) nombreInput.value = originalData.nombre;
+        if (empresaInput) empresaInput.value = originalData.empresa;
+        if (correoInput) correoInput.value = originalData.correo;
+    }
+
     function setEditingMode(editing) {
         const textFields = ['.username', '.nombre', '.empresa', '.correo'];
         textFields.forEach(fieldClass => {
             const container = datosUsuarioDiv.querySelector(fieldClass);
+            if (!container) return;
             const text = container.querySelector('p:nth-child(2)');
             const input = container.querySelector('input');
-            if (text && input) {
-                text.style.display = editing ? 'none' : 'block';
+            if (text) text.style.display = editing ? 'none' : 'block';
+            if (input) {
+                input.hidden = !editing;
                 input.style.display = editing ? 'block' : 'none';
             }
         });
 
+        // Password fields may not exist in this template — guard access
         const passwordContainer = datosUsuarioDiv.querySelector('.password');
         const confirmPasswordContainer = datosUsuarioDiv.querySelector('.confirm_password');
-        const passwordLabel = passwordContainer.querySelector('p');
-        const passwordInput = passwordContainer.querySelector('input');
-        const confirmPasswordLabel = confirmPasswordContainer.querySelector('p');
-        const confirmPasswordInput = confirmPasswordContainer.querySelector('input');
+        let passwordLabel, passwordInput, confirmPasswordLabel, confirmPasswordInput;
+        if (passwordContainer) {
+            passwordLabel = passwordContainer.querySelector('p');
+            passwordInput = passwordContainer.querySelector('input');
+        }
+        if (confirmPasswordContainer) {
+            confirmPasswordLabel = confirmPasswordContainer.querySelector('p');
+            confirmPasswordInput = confirmPasswordContainer.querySelector('input');
+        }
 
-        if (editing) {
-            passwordLabel.hidden = false;
-            passwordInput.hidden = false;
-            passwordInput.style.display = 'block';
-            confirmPasswordLabel.hidden = false;
-            confirmPasswordInput.hidden = false;
-            confirmPasswordInput.style.display = 'block';
-        } else {
-            passwordLabel.hidden = true;
-            passwordInput.hidden = true;
-            passwordInput.style.display = 'none';
-            confirmPasswordLabel.hidden = true;
-            confirmPasswordInput.hidden = true;
-            confirmPasswordInput.style.display = 'none';
+        if (passwordLabel) passwordLabel.hidden = !editing;
+        if (passwordInput) { passwordInput.hidden = !editing; passwordInput.style.display = editing ? 'block' : 'none'; }
+        if (confirmPasswordLabel) confirmPasswordLabel.hidden = !editing;
+        if (confirmPasswordInput) { confirmPasswordInput.hidden = !editing; confirmPasswordInput.style.display = editing ? 'block' : 'none'; }
+
+        if (volverLink) {
+            if (editing) {
+                volverLink.textContent = 'Cancelar';
+                volverLink.href = '#';
+            } else {
+                volverLink.textContent = 'Volver';
+                volverLink.href = '/perfil';
+            }
         }
     }
 
     function showError(message) {
-
         alert(message);
     }
 
@@ -170,6 +190,18 @@
 
         guardarCambios();
     });
+
+    if (volverLink) {
+        volverLink.addEventListener('click', function(event) {
+            const isEditing = editarLink.dataset.editing === 'true';
+            if (!isEditing) return;
+            event.preventDefault();
+            restoreOriginalValues();
+            setEditingMode(false);
+            editarLink.textContent = 'Editar';
+            editarLink.dataset.editing = 'false';
+        });
+    }
 
     setEditingMode(false);
     </script>

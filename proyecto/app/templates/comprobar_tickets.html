@@ -21,21 +21,22 @@
 </div>
 
 <script>
-    const ticketsContainer = document.querySelector('.tickets');
+    document.addEventListener('DOMContentLoaded', () => {
+        const ticketsContainer = document.querySelector('.tickets');
 
-    function showMessage(message) {
-        ticketsContainer.innerHTML = `<p>${message}</p>`;
-    }
+        const showMessage = message => {
+            ticketsContainer.innerHTML = `<p>${message}</p>`;
+        };
 
-    function renderTickets(tickets) {
-        if (!Array.isArray(tickets) || tickets.length === 0) {
-            showMessage('No hay tickets disponibles.');
-            return;
-        }
+        const renderTickets = tickets => {
+            if (!Array.isArray(tickets) || tickets.length === 0) {
+                showMessage('No hay tickets disponibles.');
+                return;
+            }
 
-        const rows = tickets.map(ticket => {
-            const fecha = ticket.fecha_creacion ? new Date(ticket.fecha_creacion).toLocaleString() : '';
-            return `
+            const rows = tickets.map(ticket => {
+                const fecha = ticket.fecha_creacion ? new Date(ticket.fecha_creacion).toLocaleString() : '';
+                return `
                     <tr>
                         <td>${ticket.id || ''}</td>
                         <td>${ticket.empresa || ''}</td>
@@ -47,9 +48,9 @@
                         <td>${ticket.empresa_transporte || ''}</td>
                         <td>${fecha}</td>
                     </tr>`;
-        }).join('');
+            }).join('');
 
-        ticketsContainer.innerHTML = `
+            ticketsContainer.innerHTML = `
                 <table class="tickets-table">
                     <thead>
                         <tr>
@@ -68,35 +69,32 @@
                         ${rows}
                     </tbody>
                 </table>`;
-    }
+        };
 
-    function loadTickets() {
-        const headers = {};
-        const token = localStorage.getItem('token_sesion');
-        if (token) {
-            headers['Session'] = token;
-        }
+        const loadTickets = async () => {
+            const headers = {};
+            const token = localStorage.getItem('token_sesion');
+            if (token) headers.Session = token;
 
-        fetch('/tickets_android/', {
-            method: 'GET',
-            headers
-        })
-            .then(response => response.json().then(data => ({ status: response.status, ok: response.ok, data })))
-            .then(({ status, ok, data }) => {
-                if (!ok) {
-                    const message = data && data.error ? data.error : `Error al cargar tickets (HTTP ${status})`;
+            try {
+                const response = await fetch('/tickets_android/', { method: 'GET', headers });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const message = data && data.error ? data.error : `Error al cargar tickets (HTTP ${response.status})`;
                     showMessage(message);
                     return;
                 }
+
                 renderTickets(data);
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error al cargar tickets:', error);
                 showMessage('No se pudieron cargar los tickets. Revisa la consola para más detalles.');
-            });
-    }
+            }
+        };
 
-    document.addEventListener('DOMContentLoaded', loadTickets);
+        loadTickets();
+    });
 </script>
 
 {% endblock %}

@@ -6,8 +6,6 @@
 {% block head %}
 
 <link rel="stylesheet" href="{% static 'css/tickets_usuario.css' %}">
-<link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
-<link rel="icon" href="{% static 'img/olton.png' %}">
 
 {% endblock %}
 
@@ -18,7 +16,50 @@
 
 <div class="titulo">
     <h1>Mis tickets</h1>
+    <button type="button" class="btn-inicio" onclick="window.location.href='/';">Subir nuevo ticket</button>
+</div>
 
+<div class="filtros">
+    <button type="button" class="filter-toggle" aria-expanded="false">Filtros ▾</button>
+
+    <div class="filter-panel" aria-hidden="true">
+        <form method="get" class="filtro-form">
+            <div class="filtro-item">
+                <label for="usuario">Usuario</label>
+                <input id="usuario" name="usuario" type="text" value="{{ filtros.usuario }}" placeholder="Usuario">
+            </div>
+            <div class="filtro-item">
+                <label for="id_dispositivo">ID dispositivo</label>
+                <input id="id_dispositivo" name="id_dispositivo" type="text" value="{{ filtros.id_dispositivo }}" placeholder="ID dispositivo">
+            </div>
+            <div class="filtro-item">
+                <label for="tipo_dispositivo">Tipo dispositivo</label>
+                <select id="tipo_dispositivo" name="tipo_dispositivo">
+                    <option value="">Todos</option>
+                    {% for value, label in tipo_dispositivo_choices %}
+                    <option value="{{ value }}" {% if filtros.tipo_dispositivo == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filtro-item">
+                <label for="estado">Estado</label>
+                <select id="estado" name="estado">
+                    <option value="">Todos</option>
+                    {% for value, label in estado_choices %}
+                    <option value="{{ value }}" {% if filtros.estado == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filtro-item">
+                <label for="fecha">Fecha</label>
+                <input id="fecha" name="fecha" type="date" value="{{ filtros.fecha }}">
+            </div>
+            <div class="filtro-item filtro-botones">
+                <button type="submit">Filtrar</button>
+                <a href="" class="btn-limpiar">Limpiar</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="tabla_tickets">
@@ -27,6 +68,9 @@
             <th>ID</th>
             <th>Empresa</th>
             <th>Usuario</th>
+            <th>ID dispositivo</th>
+            <th>Tipo dispositivo</th>
+            <th>Estado</th>
             <th>Fecha</th>
         </tr>
         {% for ticket in tickets %}
@@ -34,10 +78,43 @@
             <td>{{ ticket.id }}</td>
             <td>{{ ticket.idUsuario.empresa.nombre }}</td>
             <td>{{ ticket.idUsuario.username }}</td>
+            <td>{{ ticket.id_dispositivo }}</td>
+            <td>{{ ticket.tipo_dispositivo }}</td>
+            <td>{{ ticket.estado }}</td>
             <td>{{ ticket.fecha_creacion }}</td>
         </tr>
         {% endfor %}
     </table>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const filtros = document.querySelector('.filtros');
+    if (!filtros) return;
+    const toggle = filtros.querySelector('.filter-toggle');
+    const panel = filtros.querySelector('.filter-panel');
+
+    const setOpen = open => {
+        filtros.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    };
+
+    toggle.addEventListener('click', e => {
+        e.stopPropagation();
+        setOpen(!filtros.classList.contains('open'));
+    });
+
+    // Cerrar al pulsar fuera
+    document.addEventListener('click', e => {
+        if (!filtros.contains(e.target)) setOpen(false);
+    });
+
+    // Permitir tecla ESC para cerrar
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') setOpen(false);
+    });
+});
+</script>
 
 {% endblock %}

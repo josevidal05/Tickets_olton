@@ -32,11 +32,13 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('admin/', admin.site.urls),
     path("perfil/", views.perfil),
-
+    path("datos_usuario/cambiar_contraseña/", views.contraseña),
+    path("perfil_usuario/editar_contraseña/", views.edit_password, name='edit_password'),
 
 
     path("tickets/", views.ticket_w),
     path("ticket/<int:ticket_id>/", views.ticket_id),
+    path("tickets/<int:ticket_id>/pdf/", views.ticket_pdf),
     path("perfil_usuario/", views.perfil_usuario),
     path("registro/", views.registro),
     path("registrar_usuario/", views.registar_usuario_w, name='registrar_usuario_w'),

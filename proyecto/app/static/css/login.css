@@ -1,65 +1,95 @@
 
 
-h1{
-    font-size: 40px;
+.titulo {
+    max-width: 760px;
+    margin: 30px auto 20px;
+    text-align: center;
 }
 
-h4{
-    font-size: 25px;
+.titulo h1 {
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    color: #1f3f75;
 }
 
-.titulo img{
-    width: 150px;
-    height: 150px;
+.titulo h4 {
+    font-size: 1.05rem;
+    color: #4f658c;
+    font-weight: 500;
 }
 
 form {
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid black;
-    border-radius: 25px;
-    padding: 20px;
-    background-color: #f0f0f0;
-    width: 80%;
-    margin: 0 auto 30px auto;
+    max-width: 520px;
+    margin: 0 auto 30px;
+    padding: 32px 30px;
+    display: grid;
+    gap: 18px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 22px 50px rgba(44, 77, 140, 0.12);
 }
 
-/* Campos del formulario */
 form div {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
-    width: 100%;
+    display: grid;
+    gap: 10px;
     text-align: left;
 }
 
 form div p {
-    margin: 10px 0px;
-    font-weight: bold;
-    font-size: 18px;
+    margin: 0;
+    font-weight: 700;
+    color: #233059;
 }
 
-form input{
-    padding: 10px 0px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+form input {
     width: 100%;
+    padding: 14px 0px;
+    border-radius: 16px;
+    border: 1px solid #d5dbe8;
+    background: #f9fbff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+form input:focus {
+    border-color: #5b84ff;
+    box-shadow: 0 0 0 4px rgba(91, 132, 255, 0.14);
+    outline: none;
+}
 
-form button{
-    padding: 5px 40px;
-    font-size: 18px;
-    background-color: rgb(0, 89, 255);
-    color: white;
+button {
+    width: 100%;
+    padding: 15px 0;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 20px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #2664ff 0%, #3ebeff 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 30px rgba(38, 100, 255, 0.24);
+}
+
+p {
+    text-align: center;
+    color: #4f5f82;
+}
+
+p a {
+    color: #204bcc;
+    font-weight: 700;
+}
+
+p a:hover {
+    color: #152e6f;
+}
+
+@media (max-width: 540px) {
+    form {
+        padding: 24px 20px;
+    }
+}
+
 

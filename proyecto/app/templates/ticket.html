@@ -5,8 +5,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/ticket.css' %}">
-<link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
-<link rel="icon" href="{% static 'img/olton.png' %}">
+
 {% endblock %}
 
 {% block content %}
@@ -27,17 +26,17 @@
             <label>ID</label>
             <div class="form-value" id="id">{{ ticket.id }}</div>
         </div>
-        <hr>
+        
         <div class="form-group">
             <label>Empresa</label>
             <div class="form-value">{{ ticket.idUsuario.empresa.nombre }}</div>
         </div>
-        <hr>
+        
         <div class="form-group">
             <label>Contacto</label>
             <div class="form-value">{{ ticket.idUsuario.username }}</div>
         </div>
-        <hr>
+        
         <div class="form-group">
             <label>Tipo de dispositivo</label>
             <div class="form-field">
@@ -51,7 +50,7 @@
                 </select>
             </div>
         </div>
-        <hr>
+        
         <div class="form-group">
             <label>ID dispositivo</label>
 
@@ -62,7 +61,7 @@
                     style="display:none;">
             </div>
         </div>
-        <hr>
+        
         <div class="form-group">
             <label>Observaciones</label>
             <div class="form-field">
@@ -71,8 +70,9 @@
                     style="display:none;">{{ ticket.observaciones }}</textarea>
             </div>
         </div>
+
         <div id="archivo-div" class="form-group">
-            <!-- <label>Archivo</label> -->
+             <label>Archivo adjunto</label>
             <div class="form-field">
                 <span id="archivo-display">
                     {% if ticket.archivo %}
@@ -89,7 +89,7 @@
                     style="display:none; margin-top: .5rem;">
             </div>
         </div>
-        <hr>
+        
         <div class="form-group">
             <label>Portes</label>
             <div class="form-field">
@@ -100,7 +100,7 @@
                 </select>
             </div>
         </div>
-        <hr>
+        
         <div class="form-group">
             <label>Empresa de transporte</label>
             <div class="form-field">
@@ -109,7 +109,12 @@
                     value="{{ ticket.empresa_transporte }}" style="display:none;">
             </div>
         </div>
-        <hr>
+
+        <div class="form-group">
+            <label>Estado</label>
+            <div class="form-value">{{ ticket.estado }}</div>
+        </div>
+        
         <div class="form-group">
             <label>Fecha de creación</label>
             <div class="form-value">{{ ticket.fecha_creacion }}</div>
@@ -120,6 +125,7 @@
         <button id="edit-btn">Editar</button>
         <button id="save-btn" style="display:none;">Guardar Cambios</button>
         <button id="cancel-btn" style="display:none;">Cancelar</button>
+        <button id="imprimir-ticket">Imprimir Ticket</button>
         <button id="delete-btn">Eliminar Ticket</button>
     </div>
 
@@ -128,78 +134,136 @@
 </div>
 
 <script>
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const form = document.getElementById('ticket-form');
+    document.addEventListener('DOMContentLoaded', () => {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const form = document.getElementById('ticket-form');
+        const editBtn = document.getElementById('edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const imprimirBtn = document.getElementById('imprimir-ticket');
 
-    document.getElementById('edit-btn').addEventListener('click', function () {
-        // Mostrar campos de edición
-        document.querySelectorAll('[id$="-display"]').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('[id$="-edit"]').forEach(el => el.style.display = 'inline');
-        document.getElementById('edit-btn').style.display = 'none';
-        document.getElementById('save-btn').style.display = 'inline';
-        document.getElementById('cancel-btn').style.display = 'inline';
-        document.getElementById('delete-btn').style.display = 'none';
-    });
-
-    document.getElementById('cancel-btn').addEventListener('click', function () {
-        // Ocultar campos de edición
-        document.querySelectorAll('[id$="-display"]').forEach(el => el.style.display = 'inline');
-        document.querySelectorAll('[id$="-edit"]').forEach(el => el.style.display = 'none');
-        document.getElementById('edit-btn').style.display = 'inline';
-        document.getElementById('save-btn').style.display = 'none';
-        document.getElementById('cancel-btn').style.display = 'none';
-        document.getElementById('delete-btn').style.display = 'inline';
-    });
-
-    document.getElementById('save-btn').addEventListener('click', function () {
-        const formData = new FormData(form);
-
-        fetch(window.location.href, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-            },
-            body: formData,
-            credentials: 'same-origin'
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert('Ticket actualizado correctamente');
-                    location.reload();
-                } else {
-                    alert('Error al actualizar: ' + (result.error || ''));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al actualizar el ticket');
+        const setEditMode = isEditing => {
+            document.querySelectorAll('[id$="-display"]').forEach(el => {
+                el.style.display = isEditing ? 'none' : 'inline';
             });
-    });
+            document.querySelectorAll('[id$="-edit"]').forEach(el => {
+                el.style.display = isEditing ? 'inline' : 'none';
+            });
 
-    document.getElementById('delete-btn').addEventListener('click', function () {
-        if (confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
-            fetch(window.location.href, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': csrfToken,
-                },
+            editBtn.style.display = isEditing ? 'none' : 'inline';
+            saveBtn.style.display = isEditing ? 'inline' : 'none';
+            cancelBtn.style.display = isEditing ? 'inline' : 'none';
+            deleteBtn.style.display = isEditing ? 'none' : 'inline';
+            imprimirBtn.style.display = isEditing ? 'none' : 'inline';
+        };
+
+        const showAlert = (message, isError = false) => {
+            if (isError) {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
+            window.alert(message);
+        };
+
+        const sendRequest = async (method, body) => {
+            const headers = { 'X-CSRFToken': csrfToken };
+            if (body && typeof body === 'string') {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            const response = await fetch(window.location.href, {
+                method,
+                headers,
+                body,
                 credentials: 'same-origin'
-            })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        alert('Ticket eliminado correctamente');
-                        window.location.href = '/perfil/';
-                    } else {
-                        alert('Error al eliminar: ' + result.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error al eliminar el ticket');
+            });
+
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (error) {
+                throw new Error(`Respuesta inválida del servidor (${response.status}): ${text}`);
+            }
+        };
+
+        editBtn.addEventListener('click', () => setEditMode(true));
+
+        cancelBtn.addEventListener('click', () => setEditMode(false));
+
+        saveBtn.addEventListener('click', async () => {
+            try {
+                const payload = {
+                    tipo_dispositivo: document.getElementById('tipo_dispositivo-edit').value,
+                    id_dispositivo: document.getElementById('id_dispositivo-edit').value,
+                    observaciones: document.getElementById('observaciones-edit').value,
+                    portes: document.getElementById('portes-edit').value,
+                    empresa_transporte: document.getElementById('empresa_transporte-edit').value,
+                };
+
+                const result = await sendRequest('PUT', JSON.stringify(payload));
+                if (!result.success) {
+                    throw new Error(result.error || 'Error al actualizar el ticket.');
+                }
+                showAlert('Ticket actualizado correctamente.');
+                location.reload();
+            } catch (error) {
+                showAlert(error.message, true);
+            }
+        });
+
+        deleteBtn.addEventListener('click', async () => {
+            if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
+                return;
+            }
+
+            try {
+                const result = await sendRequest('DELETE');
+                if (!result.success) {
+                    throw new Error(result.error || 'Error al eliminar el ticket.');
+                }
+                showAlert('Ticket eliminado correctamente.');
+                window.location.href = '/perfil/';
+            } catch (error) {
+                showAlert(error.message, true);
+            }
+        });
+
+        imprimirBtn.addEventListener('click', async () => {
+            try {
+                const ticketId = document.getElementById('id').textContent.trim();
+                const response = await fetch(`/tickets/${ticketId}/pdf/`, {
+                    method: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    credentials: 'same-origin'
                 });
-        }
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}: Error al generar el PDF`);
+                }
+
+                const blob = await response.blob();
+                
+                // Verificar que el blob sea válido
+                if (blob.size === 0) {
+                    throw new Error('El archivo PDF está vacío.');
+                }
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `ticket_${ticketId}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                showAlert('Ticket descargado correctamente.');
+            } catch (error) {
+                showAlert(`Error al descargar el PDF: ${error.message}`, true);
+            }
+        });
     });
 </script>
 

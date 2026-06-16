@@ -1,31 +1,104 @@
 h1 {
-    font-size: 40px;
+    font-size: 2.5rem;
+    margin: 40px auto 25px;
+    text-align: center;
+    color: #0d2b4f;
+    letter-spacing: 0.03em;
 }
 
 .opciones {
-    width: 80%;
-    margin: 0 auto;
+    width: min(920px, 90%);
+    margin: 0 auto 30px;
+    display: grid;
+    gap: 18px;
 }
 
 .opciones a {
+    display: block;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid rgba(31, 58, 114, 0.12);
+    border-radius: 22px;
+    box-shadow: 0 20px 60px rgba(31, 58, 114, 0.08);
+    transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
     text-decoration: none;
-    color: black;
-    font-size: 20px;
-    margin: 0px 0px;
+    color: #1f3a72;
+}
+
+.opciones a:hover {
+    transform: translateY(-4px);
+    border-color: rgba(31, 58, 114, 0.25);
+    box-shadow: 0 30px 80px rgba(31, 58, 114, 0.12);
 }
 
 .contenido_a {
     display: flex;
-    flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    gap: 12px;
+    padding: 24px 28px;
 }
 
-.cerrar-sesion a button {
-    margin-top: 30px;
-    padding: 10px 20px;
-    color: red;
-    font-weight: bold;
-    font-size: 16px;
+.contenido_a p {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.contenido_a p:first-child {
+    color: #122241;
+}
+
+.contenido_a p:last-child {
+    color: #64779e;
+    font-size: 1.1rem;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: rgba(31, 58, 114, 0.1);
+    margin: 0;
+}
+
+.cerrar-sesion {
+    width: min(920px, 90%);
+    margin: 0 auto 40px;
+    text-align: center;
+}
+
+.cerrar-sesion a {
+    display: inline-block;
+}
+
+.cerrar-sesion button {
+    margin-top: 25px;
+    padding: 14px 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #e63d3d 0%, #d13380 100%);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.24s ease, box-shadow 0.24s ease, opacity 0.24s ease;
+}
+
+.cerrar-sesion button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 30px rgba(214, 51, 128, 0.24);
+    opacity: 0.98;
+}
+
+@media (max-width: 640px) {
+    .contenido_a {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+    }
+
+    .contenido_a p:last-child {
+        margin-top: 8px;
+        text-align: right;
+        width: 100%;
+    }
 }

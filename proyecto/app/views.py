@@ -1,6 +1,7 @@
 import secrets
 from urllib import request
 import bcrypt
+from datetime import datetime
 
 from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
@@ -15,7 +16,7 @@ def index(request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    return render(request, 'index.html', {'user': authenticated_user})
+    return render(request, 'crear_ticket.html', {'user': authenticated_user})
 
 def comprobar_tickets(request):
     # Verificar si el usuario está autenticado
@@ -30,10 +31,49 @@ def tickets_usuario(request):
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
 
-    tickets = Ticket.objects.filter(idUsuario=authenticated_user)
+    if authenticated_user.admin:
+        tickets = Ticket.objects.all()
+    elif authenticated_user.empresa.encargado == authenticated_user.username:
+        tickets = Ticket.objects.filter(idUsuario__empresa = authenticated_user.empresa)
+    else:
+        tickets = Ticket.objects.filter(idUsuario=authenticated_user)
+
+    filtros = {
+        'usuario': request.GET.get('usuario', '').strip(),
+        'id_dispositivo': request.GET.get('id_dispositivo', '').strip(),
+        'tipo_dispositivo': request.GET.get('tipo_dispositivo', '').strip(),
+        'estado': request.GET.get('estado', '').strip(),
+        'fecha': request.GET.get('fecha', '').strip(),
+    }
+
+    if filtros['usuario']:
+        tickets = tickets.filter(idUsuario__username__icontains=filtros['usuario'])
+
+    if filtros['id_dispositivo']:
+        if filtros['id_dispositivo'].isdigit():
+            tickets = tickets.filter(id_dispositivo=int(filtros['id_dispositivo']))
+        else:
+            tickets = tickets.filter(id_dispositivo__icontains=filtros['id_dispositivo'])
+
+    if filtros['tipo_dispositivo']:
+        tickets = tickets.filter(tipo_dispositivo=filtros['tipo_dispositivo'])
+
+    if filtros['estado']:
+        tickets = tickets.filter(estado=filtros['estado'])
+
+    if filtros['fecha']:
+        try:
+            fecha_obj = datetime.fromisoformat(filtros['fecha']).date()
+            tickets = tickets.filter(fecha_creacion__date=fecha_obj)
+        except ValueError:
+            pass
+
     return render(request, 'tickets_usuario.html', {
         'user': authenticated_user,
-        'tickets': tickets
+        'tickets': tickets,
+        'filtros': filtros,
+        'tipo_dispositivo_choices': Ticket.TIPO_DISPOSITIVO_CHOICES,
+        'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
     })
 
 def login(request):
@@ -70,6 +110,17 @@ def datos_usuario(request):
     return render(request, 'datos_usuario.html', {
         'user': authenticated_user
     })
+
+def contraseña(request):
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    
+    return render(request, 'cambiar_contraseña.html', {
+        'user': authenticated_user
+    })
+
 
 
 
@@ -109,16 +160,35 @@ def ticket_w(request):
 
         if authenticated_user is None:
             return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
-
+        
         try:
+            # Obtener campos y validar presencia
+            tipo_disp = request.POST.get("tipo_dispositivo")
+            id_disp_raw = request.POST.get("id_dispositivo")
+            observaciones = request.POST.get("observaciones")
+            portes = request.POST.get("portes")
+            transporte = request.POST.get("transporte")
+
+            if not all([tipo_disp, id_disp_raw, observaciones, portes, transporte]):
+                return JsonResponse({"error": "Faltan campos obligatorios"}, status=400)
+
+            # Validar que sea número y convertir a int
+            if not id_disp_raw.isdigit():
+                return JsonResponse({"error": "El ID del dispositivo debe ser un número"}, status=400)
+
+            id_dispositivo = int(id_disp_raw)
+            if id_dispositivo < 1:
+                return JsonResponse({"error": "El ID del dispositivo debe ser mayor que 0"}, status=400)
+
             ticket = Ticket.objects.create(
                 idUsuario=authenticated_user,
-                tipo_dispositivo=request.POST.get("tipo_dispositivo"),
-                id_dispositivo=request.POST.get("id_dispositivo"),
-                observaciones=request.POST.get("observaciones"),
-                portes=request.POST.get("portes"),
-                empresa_transporte=request.POST.get("transporte"),
-                archivo=request.FILES.get("archivo")
+                tipo_dispositivo=tipo_disp,
+                id_dispositivo=id_dispositivo,
+                observaciones=observaciones,
+                portes=portes,
+                empresa_transporte=transporte,
+                archivo=request.FILES.get("archivo"),
+                estado="no leido"
             )
 
             return JsonResponse({
@@ -213,7 +283,7 @@ def iniciar_sesion(request):
                 # Guardar el token en la sesión de Django
                 request.session['session_token'] = new_token
                 
-                return HttpResponseRedirect('/perfil/')
+                return HttpResponseRedirect('/tickets_usuario/')
             
             else:
                 return render(request, 'login.html', {
@@ -277,17 +347,15 @@ def ticket_id(request, ticket_id):
 
     try:
         ticket = Ticket.objects.get(id=ticket_id)
-        # Verificar que el ticket pertenece al usuario
-        if ticket.idUsuario != authenticated_user:
-            if request.method == 'GET':
-                return render(request, 'ticket.html', {'error': 'No tienes permiso para ver este ticket'})
-            else:
-                return JsonResponse({"error": "No tienes permiso para acceder a este ticket"}, status=403)
     except Ticket.DoesNotExist:
         if request.method == 'GET':
             return render(request, 'ticket.html', {'error': 'El ticket no existe'})
-        else:
-            return JsonResponse({"error": "El ticket no existe"}, status=404)
+        return JsonResponse({"error": "El ticket no existe"}, status=404)
+
+    if ticket.idUsuario != authenticated_user and authenticated_user.username != ticket.idUsuario.empresa.encargado:
+        if request.method == 'GET':
+            return render(request, 'ticket.html', {'error': 'No tienes permiso para ver este ticket'})
+        return JsonResponse({"error": "No tienes permiso para acceder a este ticket"}, status=403)
 
     if request.method == 'GET':
         return render(request, 'ticket.html', {'ticket': ticket})
@@ -296,20 +364,12 @@ def ticket_id(request, ticket_id):
         ticket.delete()
         return JsonResponse({"success": True}, status=200)
 
-    elif request.method == 'POST':
-        ticket.tipo_dispositivo = request.POST.get("tipo_dispositivo", ticket.tipo_dispositivo)
-        ticket.id_dispositivo = request.POST.get("id_dispositivo", ticket.id_dispositivo)
-        ticket.observaciones = request.POST.get("observaciones", ticket.observaciones)
-        ticket.portes = request.POST.get("portes", ticket.portes)
-        ticket.empresa_transporte = request.POST.get("empresa_transporte", ticket.empresa_transporte)
-        uploaded_file = request.FILES.get("archivo")
-        if uploaded_file:
-            ticket.archivo = uploaded_file
-        ticket.save()
-        return JsonResponse({"success": True}, status=200)
-
     elif request.method == 'PUT':
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return JsonResponse({"error": "JSON inválido"}, status=400)
+
         ticket.tipo_dispositivo = data.get("tipo_dispositivo", ticket.tipo_dispositivo)
         ticket.id_dispositivo = data.get("id_dispositivo", ticket.id_dispositivo)
         ticket.observaciones = data.get("observaciones", ticket.observaciones)
@@ -340,7 +400,12 @@ def perfil_usuario (request):
         nombre = data.get("nombre")
         empresa_nombre = data.get("empresa")
         correo = data.get("correo")
-        password = data.get("password")
+        password_actual = data.get("contrasena_actual")
+        password = data.get("contrasena_nueva")
+        confirm_password = data.get("contrasena_nueva_confirmar")
+
+        if password_actual and not bcrypt.checkpw(password_actual.encode('utf8'), authenticated_user.password.encode('utf8')):
+            return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
 
         if username == "" or correo == "" or nombre == "" or empresa_nombre == "":
             return JsonResponse({"error": "No se han proporcionado campos para actualizar"}, status=400)
@@ -368,6 +433,8 @@ def perfil_usuario (request):
             authenticated_user.empresa = empresa_obj
 
         if password and password.strip() != "":
+            if password != confirm_password:
+                return JsonResponse({"error": "Las contraseñas no coinciden"}, status=400)
             hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
             authenticated_user.password = hashed_password
 
@@ -379,3 +446,155 @@ def perfil_usuario (request):
 
     else:
         return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
+
+def edit_password(request):
+    authenticated_user = __get_request_user(request)
+    
+    if authenticated_user is None:
+        return JsonResponse({"error": "El token de sesión no es válido o no se ha enviado"}, status=401)
+
+    
+    if request.method != PUT:
+        JsonResponse({"error": "Método no válido"}, status=405 )
+
+    else: 
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return JsonResponse({"error": "JSON inválido"}, status=400)
+
+        password_actual_noHash = data.get("contrasena_actual")
+        password_noHash = data.get("contrasena_nueva")
+        confirm_password_noHash = data.get("contrasena_nueva_confirmar")
+
+        if password_actual_noHash and not bcrypt.checkpw(password_actual_noHash.encode('utf8'), authenticated_user.password.encode('utf8')):
+            return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
+        
+        if password_noHash == "" or password_noHash is None:
+            return JsonResponse({"error": "La nueva contraseña no puede estar vacía"}, status=401)
+    
+        if password_actual_noHash != confirm_password_noHash:
+            return JsonResponse({"error": "Las contraseñas no coinciden"}, status=401)
+
+        hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
+        
+
+
+        try:
+            authenticated_user.save()
+            return JsonResponse({"success": True}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+
+
+def ticket_pdf(request, ticket_id):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from io import BytesIO
+    from django.http import HttpResponse
+    
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return JsonResponse({"error": "No autenticado"}, status=401)
+    
+    try:
+        ticket = Ticket.objects.get(id=ticket_id)
+        if ticket.idUsuario != authenticated_user and not authenticated_user.admin:
+            return JsonResponse({"error": "No tienes permiso para descargar este ticket"}, status=403)
+    except Ticket.DoesNotExist:
+        return JsonResponse({"error": "Ticket no encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": f"Error al acceder al ticket: {str(e)}"}, status=500)
+    
+    try:
+        # Crear buffer para PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=20, bottomMargin=20)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Estilos personalizados
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            textColor=colors.HexColor('#1f3a72'),
+            spaceAfter=18,
+            alignment=1,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Encabezado
+        story.append(Paragraph(f'Detalle del Ticket #{ticket.id}', title_style))
+        story.append(Spacer(1, 12))
+        
+        # Preparar datos del ticket con valores seguros
+        empresa_nombre = ticket.idUsuario.empresa.nombre if (ticket.idUsuario and ticket.idUsuario.empresa) else 'N/A'
+        tipo_dispositivo = ticket.get_tipo_dispositivo_display() if hasattr(ticket, 'get_tipo_dispositivo_display') else ticket.tipo_dispositivo
+        portes = ticket.get_portes_display() if hasattr(ticket, 'get_portes_display') else ticket.portes
+        
+        data = [
+            ['Campo', 'Valor'],
+            ['ID Ticket', str(ticket.id)],
+            ['Empresa', empresa_nombre],
+            ['Contacto', ticket.idUsuario.username if ticket.idUsuario else 'N/A'],
+            ['Tipo de dispositivo', str(tipo_dispositivo)],
+            ['ID dispositivo', str(ticket.id_dispositivo) if ticket.id_dispositivo else 'N/A'],
+            ['Observaciones', str(ticket.observaciones) if ticket.observaciones else 'N/A'],
+            ['Portes', str(portes)],
+            ['Empresa de transporte', str(ticket.empresa_transporte) if ticket.empresa_transporte else 'N/A'],
+            ['Estado', str(ticket.estado) if ticket.estado else 'N/A'],
+            ['Fecha de creación', str(ticket.fecha_creacion) if ticket.fecha_creacion else 'N/A'],
+        ]
+        
+        table = Table(data, colWidths=[140, 310])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f3a72')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d7dce8')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fbff')]),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ]))
+        
+        story.append(table)
+        story.append(Spacer(1, 20))
+        
+        # Pie de página
+        footer_text = f'Generado el {datetime.now().strftime("%d/%m/%Y %H:%M:%S")} | Sistema de Tickets'
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.HexColor('#8899aa'),
+            alignment=1
+        )
+        story.append(Paragraph(footer_text, footer_style))
+        
+        # Construir PDF
+        doc.build(story)
+        
+        # Preparar respuesta
+        buffer.seek(0)
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="ticket_{ticket.id}.pdf"'
+        return response
+        
+    except Exception as e:
+        import traceback
+        print(f"Error en ticket_pdf: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({"error": f"Error al generar PDF: {str(e)}"}, status=500)
+
+

@@ -1,39 +1,88 @@
-body {
-    margin: 0;
-    text-align: center;
-    font-family: Arial, Helvetica, sans-serif;
+* {
+    box-sizing: border-box;
 }
 
-.cabecera{
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: radial-gradient(circle at top left, #eef4ff 0%, #f6f7fb 45%, #eef1f9 100%);
+    color: #21304d;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+.cabecera {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
     align-items: center;
-    background-color: black;
-    padding: 10px 20px;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px 26px;
+    background: linear-gradient(135deg, #1b3a78 0%, #243f8e 45%, #2c5dba 100%);
+    box-shadow: 0 18px 40px rgba(20, 48, 96, 0.18);
+    position: sticky;
+    top: 0;
+    z-index: 50;
 }
 
 .logo_cabecera {
+    height: 56px;
     width: auto;
-    height: 50px; 
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    
 }
- 
 
-/* div de los iconos*/ 
+.logo_cabecera a:hover{
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.24);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+
+}
+
 .navegacion {
-
-
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-
-.navegacion a{
+.navegacion a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
     text-decoration: none;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
-
-.user_cabecera, .ticket_cabecera {
-    color: white;
-    width: 25px;
-    height: 25px;
-    margin: 0px 15px;
+.navegacion a:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.24);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
+
+.user_cabecera,
+.ticket_cabecera {
+    color: #ffffff;
+    width: 24px;
+    height: 24px;
+}
+
+@media (max-width: 720px) {
+    .cabecera {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 18px 18px;
+    }
+
+    .navegacion {
+        justify-content: center;
+        width: 100%;
+    }
+}
+

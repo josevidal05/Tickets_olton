@@ -72,38 +72,51 @@
 </form>
 
 <script>
-    document.querySelector('form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const fileInput = document.querySelector('input[name="archivo"]');
-        const file = fileInput.files[0];
-        if (file) {
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('form');
+        const fileInput = form.querySelector('input[name="archivo"]');
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+
+        const validFile = file => {
+            if (!file) return true;
             const extension = file.name.split('.').pop().toLowerCase();
-            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-            if (!allowedExtensions.includes(extension)) {
-                alert('Formato de archivo inválido');
+            return allowedExtensions.includes(extension);
+        };
+
+        const showError = message => {
+            window.alert(message);
+            console.error(message);
+        };
+
+        const handleSubmit = async event => {
+            event.preventDefault();
+            const file = fileInput.files[0];
+
+            if (!validFile(file)) {
+                showError('Formato de archivo inválido. Usa jpg, png, gif, bmp o webp.');
                 return;
             }
-        }
-        const formData = new FormData(this);
-        fetch('/tickets/', {
-            method: 'POST',
-            body: formData
-        })
 
-            .then(response => {
+            try {
+                const response = await fetch('/tickets/', {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+
                 if (!response.ok) {
-                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
-            })
-            .then(data => {
+
+                const data = await response.json();
                 console.log('Success:', data);
-                alert('Ticket creado: ' + JSON.stringify(data));
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                alert('Error al crear ticket: ' + error.message);
-            });
+                window.alert('Ticket creado correctamente.');
+                form.reset();
+            } catch (error) {
+                showError('Error al crear ticket: ' + error.message);
+            }
+        };
+
+        form.addEventListener('submit', handleSubmit);
     });
 </script>
 
