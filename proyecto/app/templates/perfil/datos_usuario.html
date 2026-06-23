@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis datos{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/datos_usuario.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Mis datos</h1>
+
+<div class="datos-usuario">
+    {% csrf_token %}
+
+    <div class="username">
+        <p>Nombre de usuario:</p>
+        <p >{{ user.username }}</p>
+        <input type="text" name="username" value="{{ user.username }}" required hidden>
+    </div>
+
+    <div class="nombre">
+        <p>Nombre:</p>
+        <p>{{ user.nombre }}</p>
+        <input type="text" name="nombre" value="{{ user.nombre }}" required hidden>
+    </div>
+
+    <div class="empresa">
+        <p>Empresa:</p>
+        <p>{{ user.empresa }}</p>
+        <input type="text" name="empresa" value="{{ user.empresa }}" required hidden>
+    </div>
+
+    <div class="correo"> 
+        <p>Correo electrónico:</p>
+        <p>{{ user.correo }}</p>
+        <input type="text" name="correo" value="{{ user.correo }}" required hidden>
+    </div>
+
+    <div class="password" >
+        <a href="/cambiar_contraseña/" class="enlace_password">Cambiar contraseña</a>
+    </div>
+
+    <a href="#" class="editar">Editar</a>
+    
+    <a href="/perfil" class="volver">Volver</a>
+</div>
+
+<script>
+const datosUsuarioDiv = document.querySelector('.datos-usuario');
+const editarLink = datosUsuarioDiv.querySelector('.editar');
+const volverLink = datosUsuarioDiv.querySelector('.volver');
+const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+
+const originalData = {
+    username: getInputValue('input[name="username"]'),
+    nombre: getInputValue('input[name="nombre"]'),
+    empresa: getInputValue('input[name="empresa"]'),
+    correo: getInputValue('input[name="correo"]')
+};
+
+function getInputValue(selector) {
+    const input = datosUsuarioDiv.querySelector(selector);
+    return input ? input.value.trim() : '';
+}
+
+function restoreOriginalValues() {
+    const usernameInput = datosUsuarioDiv.querySelector('input[name="username"]');
+    const nombreInput = datosUsuarioDiv.querySelector('input[name="nombre"]');
+    const empresaInput = datosUsuarioDiv.querySelector('input[name="empresa"]');
+    const correoInput = datosUsuarioDiv.querySelector('input[name="correo"]');
+
+    if (usernameInput) usernameInput.value = originalData.username;
+    if (nombreInput) nombreInput.value = originalData.nombre;
+    if (empresaInput) empresaInput.value = originalData.empresa;
+    if (correoInput) correoInput.value = originalData.correo;
+}
+
+function setEditingMode(editing) {
+    const textFields = ['.username', '.nombre', '.empresa', '.correo'];
+    textFields.forEach(fieldClass => {
+        const container = datosUsuarioDiv.querySelector(fieldClass);
+        if (!container) return;
+        const text = container.querySelector('p:nth-child(2)');
+        const input = container.querySelector('input');
+        if (text) text.style.display = editing ? 'none' : 'block';
+        if (input) {
+            input.hidden = !editing;
+            input.style.display = editing ? 'block' : 'none';
+        }
+    });
+
+    // Password fields may not exist in this template — guard access
+    const passwordContainer = datosUsuarioDiv.querySelector('.password');
+    const confirmPasswordContainer = datosUsuarioDiv.querySelector('.confirm_password');
+    let passwordLabel, passwordInput, confirmPasswordLabel, confirmPasswordInput;
+    if (passwordContainer) {
+        passwordLabel = passwordContainer.querySelector('p');
+        passwordInput = passwordContainer.querySelector('input');
+    }
+    if (confirmPasswordContainer) {
+        confirmPasswordLabel = confirmPasswordContainer.querySelector('p');
+        confirmPasswordInput = confirmPasswordContainer.querySelector('input');
+    }
+
+    if (passwordLabel) passwordLabel.hidden = !editing;
+    if (passwordInput) { passwordInput.hidden = !editing; passwordInput.style.display = editing ? 'block' : 'none'; }
+    if (confirmPasswordLabel) confirmPasswordLabel.hidden = !editing;
+    if (confirmPasswordInput) { confirmPasswordInput.hidden = !editing; confirmPasswordInput.style.display = editing ? 'block' : 'none'; }
+
+    if (volverLink) {
+        if (editing) {
+            volverLink.textContent = 'Cancelar';
+            volverLink.href = '#';
+        } else {
+            volverLink.textContent = 'Volver';
+            volverLink.href = '/perfil';
+        }
+    }
+}
+
+function showError(message) {
+    alert(message);
+}
+
+function clearError() {
+    const errorEl = datosUsuarioDiv.querySelector('.error-message');
+    if (errorEl) {
+        errorEl.remove();
+    }
+}
+
+async function guardarCambios() {
+    clearError();
+
+    const username = getInputValue('input[name="username"]');
+    const nombre = getInputValue('input[name="nombre"]');
+    const empresa = getInputValue('input[name="empresa"]');
+    const correo = getInputValue('input[name="correo"]');
+    const password = getInputValue('input[name="password"]');
+    const confirmPassword = getInputValue('input[name="confirm_password"]');
+
+    if (password && password !== confirmPassword) {
+        showError('Las contraseñas no coinciden.');
+        return;
+    }
+
+    const payload = {
+        username,
+        nombre,
+        empresa,
+        correo,
+        password
+    };
+
+    try {
+        const response = await fetch('/perfil/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfTokenInput ? csrfTokenInput.value : ''
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            showError(data.error || data.message || 'No se pudieron guardar los cambios.');
+            return;
+        }
+
+        alert('Datos guardados correctamente.');
+        window.location.reload();
+    } catch (error) {
+        showError('Error al guardar los datos.');
+        console.error(error);
+    }
+}
+
+editarLink.addEventListener('click', function(event) {
+    event.preventDefault();
+
+    const isEditing = editarLink.dataset.editing === 'true';
+    if (!isEditing) {
+        setEditingMode(true);
+        editarLink.textContent = 'Guardar';
+        editarLink.dataset.editing = 'true';
+        return;
+    }
+
+    guardarCambios();
+});
+
+if (volverLink) {
+    volverLink.addEventListener('click', function(event) {
+        const isEditing = editarLink.dataset.editing === 'true';
+        if (!isEditing) return;
+        event.preventDefault();
+        restoreOriginalValues();
+        setEditingMode(false);
+        editarLink.textContent = 'Editar';
+        editarLink.dataset.editing = 'false';
+    });
+}
+
+setEditingMode(false);
+</script>
+
+{% endblock %}

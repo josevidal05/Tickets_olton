@@ -16,35 +16,44 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from app import views
-from app import views_ad
+from app import views, views_admin, views_ad
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     # urls para web
-    path('', views.index),
-    path('gestion/', views.comprobar_tickets),
-    path('tickets_usuario/', views.tickets_usuario),
-    path('datos_usuario/', views.datos_usuario),
-    path('login/', views.login),
-    path('iniciar_sesion/', views.iniciar_sesion, name='iniciar_sesion'),
+    path('login/', views.iniciar_sesion, name='iniciar_sesion'),
+    path("registro/", views.registar_usuario, name='registrar_usuario'),
     path('logout/', views.logout, name='logout'),
-    path('admin/', admin.site.urls),
-    path("perfil/", views.perfil),
-    path("datos_usuario/cambiar_contraseña/", views.contraseña),
-    path("perfil_usuario/editar_contraseña/", views.edit_password, name='edit_password'),
 
-
-    path("tickets/", views.ticket_w),
+    path('', views.crear_ticket),
+    path('tickets_usuario/', views.tickets_usuario),
     path("ticket/<int:ticket_id>/", views.ticket_id),
-    path("tickets/<int:ticket_id>/pdf/", views.ticket_pdf),
-    path("perfil_usuario/", views.perfil_usuario),
-    path("registro/", views.registro),
-    path("registrar_usuario/", views.registar_usuario_w, name='registrar_usuario_w'),
-    #path("tickets_usuario/", views.tickets_user), # para ver todos los tickets del usuario, esta en json
+    path("ticket/<int:ticket_id>/pdf/", views.ticket_pdf),
     
-    # urls para android
+    path("perfil/", views.perfil),
+    path('datos_usuario/', views.datos_usuario),
+    path("cambiar_contraseña/", views.contraseña, name='edit_password'),
+ 
+    path('todos_usuarios/', views.usuarios),
+    path('todas_empresas/', views.empresas),
+    path('usuario_id/<int:usuario_id>', views.usuario_id),
+
+    #urls para encargados de empresa
+    path("empresa/", views.empresa),
+    path("tickets_empresa/", views.tickets_empresa),
+    
+    # urls para admin
+    path('admin/', admin.site.urls),
+    path('gestion/', views.comprobar_tickets),
+    path('usuarios/', views.gestion_usuarios),
+    path('empresas/', views.gestion_empresas),
+    path('usuario/<int:usuario_id>', views.gestion_usuario_id),
+
+
+
+    
+    # metodos para android
     path("android/registrar_usuario/", views_ad.registrar_usuario_ad),
     path("android/login/", views_ad.iniciar_sesion_ad),
     path("android/logout/", views_ad.logout_ad),

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Empresa{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/empresa.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Empresa</h1>
+
+<div class="empresa-detalle">
+    <h2>{{ empresa.nombre }}</h2>
+    <p><strong>Encargado:</strong> {{ empresa.encargado }}</p>
+    <p><strong>Total de empresas de empresa:</strong> {{ empresa_count }}</p>
+</div>
+
+<div class="empresa-empleados">
+    <h3>Empleados</h3>
+    <ul>
+        {% for empleado in empleados %}
+        <li>{{ empleado.username }} - {{ empleado.correo }}</li>
+        {% empty %}
+        <li>No hay empleados registrados en esta empresa.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="botones">
+    <a href="/perfil/" class="btn">Volver a mi cuenta</a>
+    <a href="/empresas_empresa/" class="btn">Ver empresas de empresa</a>
+</div>
+
+{% endblock %}

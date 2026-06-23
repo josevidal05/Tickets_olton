@@ -5,8 +5,7 @@
 {% block title %}Tickets{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<link rel="stylesheet" href="{% static 'css/cabecera.css' %}">
-<link rel="icon" href="{% static 'img/olton.png' %}">
+
 
 
 {% endblock %}
@@ -21,7 +20,7 @@
 
 
 
-<form method="POST" action="#">
+<form method="POST" action="/">
 
     <div class="empresa">
         <p>Empresa:</p>
@@ -98,13 +97,14 @@
             }
 
             try {
-                const response = await fetch('/tickets/', {
+                const response = await fetch('/', {
                     method: 'POST',
                     body: new FormData(form)
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    console.log(response)
+                    // throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();

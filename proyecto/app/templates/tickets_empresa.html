@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tickets Empresa{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/tickets_usuario.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="titulo">
+    <h1>Tickets de {{ empresa.nombre }}</h1>
+    <button type="button" class="btn-inicio" onclick="window.location.href='/perfil/';">Volver a mi perfil</button>
+</div>
+
+<div class="tabla_tickets">
+    <table>
+        <tr class="cabecera_tabla">
+            <th>ID</th>
+            <th>Empresa</th>
+            <th>Usuario</th>
+            <th>ID dispositivo</th>
+            <th>Tipo dispositivo</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+        </tr>
+        {% for ticket in tickets %}
+        <tr class="fila_tabla" onclick="window.location='/ticket/{{ ticket.id }}/';" style="cursor:pointer;">
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.idUsuario.empresa.nombre }}</td>
+            <td>{{ ticket.idUsuario.username }}</td>
+            <td>{{ ticket.id_dispositivo }}</td>
+            <td>{{ ticket.tipo_dispositivo }}</td>
+            <td>{{ ticket.estado }}</td>
+            <td>{{ ticket.fecha_creacion }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No hay tickets para esta empresa.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+
+{% endblock %}

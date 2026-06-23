@@ -16,11 +16,8 @@
         <h4>Introduzca los datos</h4>
     </div>
 
-    {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
 
-    <form method="POST" action="{% url 'registrar_usuario_w' %}">
+    <form method="POST" action="{% url 'registrar_usuario' %}">
         {% csrf_token %}
 
         <div class="username">
@@ -59,5 +56,19 @@
     </form>
 
     <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión</a> </p>
+
+    
+    
+    {% if error %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var msg = "{{ error|escapejs }}";
+                if (msg) {
+                    // Mostrar alerta sin interferir con el renderizado de la página
+                    alert(msg);
+                }
+            });
+        </script>
+    {% endif %}
 
 {% endblock %}

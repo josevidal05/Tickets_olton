@@ -9,127 +9,7 @@ from django.shortcuts import render
 import json
 from .models import Ticket, Usuario, Empresa
 
-# DOCUMENTOS HMTL
-
-def index(request):
-    # Verificar si el usuario está autenticado
-    authenticated_user = __get_request_user(request)
-    if authenticated_user is None:
-        return HttpResponseRedirect('/login/')
-    return render(request, 'crear_ticket.html', {'user': authenticated_user})
-
-def comprobar_tickets(request):
-    # Verificar si el usuario está autenticado
-    authenticated_user = __get_request_user(request)
-    if authenticated_user is None:
-        return HttpResponseRedirect('/login/')
-    return render(request, 'comprobar_tickets.html')
-
-def tickets_usuario(request):
-    # Verificar si el usuario está autenticado
-    authenticated_user = __get_request_user(request)
-    if authenticated_user is None:
-        return HttpResponseRedirect('/login/')
-
-    if authenticated_user.admin:
-        tickets = Ticket.objects.all()
-    elif authenticated_user.empresa.encargado == authenticated_user.username:
-        tickets = Ticket.objects.filter(idUsuario__empresa = authenticated_user.empresa)
-    else:
-        tickets = Ticket.objects.filter(idUsuario=authenticated_user)
-
-    filtros = {
-        'usuario': request.GET.get('usuario', '').strip(),
-        'id_dispositivo': request.GET.get('id_dispositivo', '').strip(),
-        'tipo_dispositivo': request.GET.get('tipo_dispositivo', '').strip(),
-        'estado': request.GET.get('estado', '').strip(),
-        'fecha': request.GET.get('fecha', '').strip(),
-    }
-
-    if filtros['usuario']:
-        tickets = tickets.filter(idUsuario__username__icontains=filtros['usuario'])
-
-    if filtros['id_dispositivo']:
-        if filtros['id_dispositivo'].isdigit():
-            tickets = tickets.filter(id_dispositivo=int(filtros['id_dispositivo']))
-        else:
-            tickets = tickets.filter(id_dispositivo__icontains=filtros['id_dispositivo'])
-
-    if filtros['tipo_dispositivo']:
-        tickets = tickets.filter(tipo_dispositivo=filtros['tipo_dispositivo'])
-
-    if filtros['estado']:
-        tickets = tickets.filter(estado=filtros['estado'])
-
-    if filtros['fecha']:
-        try:
-            fecha_obj = datetime.fromisoformat(filtros['fecha']).date()
-            tickets = tickets.filter(fecha_creacion__date=fecha_obj)
-        except ValueError:
-            pass
-
-    return render(request, 'tickets_usuario.html', {
-        'user': authenticated_user,
-        'tickets': tickets,
-        'filtros': filtros,
-        'tipo_dispositivo_choices': Ticket.TIPO_DISPOSITIVO_CHOICES,
-        'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
-    })
-
-def login(request):
-    # Si el usuario ya está logueado, redirigir a perfil
-    authenticated_user = __get_request_user(request)
-    if authenticated_user is not None:
-        return HttpResponseRedirect('/perfil/')
-    return render(request, 'login.html')
-
-
-def perfil(request):
-    # Verificar si el usuario está autenticado
-    authenticated_user = __get_request_user(request)
-    if authenticated_user is None:
-        return HttpResponseRedirect('/login/')
-    
-    # Obtener los tickets del usuario usando la FK idUsuario
-    tickets = Ticket.objects.filter(idUsuario=authenticated_user)
-    
-    return render(request, 'perfil.html', {
-        'user': authenticated_user,
-        'tickets': tickets
-    })
-
-def registro(request):
-    return render(request, 'registro.html')
-
-def datos_usuario(request):
-    # Verificar si el usuario está autenticado
-    authenticated_user = __get_request_user(request)
-    if authenticated_user is None:
-        return HttpResponseRedirect('/login/')
-    
-    return render(request, 'datos_usuario.html', {
-        'user': authenticated_user
-    })
-
-def contraseña(request):
-    # Verificar si el usuario está autenticado
-    authenticated_user = __get_request_user(request)
-    if authenticated_user is None:
-        return HttpResponseRedirect('/login/')
-    
-    return render(request, 'cambiar_contraseña.html', {
-        'user': authenticated_user
-    })
-
-
-
-
-
-
-# MÉTODOS
-
 # Función para obtener el usuario autenticado 
-
 def __get_request_user(request):
     # Primero intentar obtener el token del header (para APIs/Android)
     header_token = request.headers.get('Session', None)
@@ -150,65 +30,11 @@ def __get_request_user(request):
     return None
 
 
-# Crear ticket para web
-@csrf_exempt
-def ticket_w(request):
+# Registrar usuario
+def registar_usuario(request):
+    if request.method == "GET":
+        return render(request, 'registro.html')
 
-    if request.method == "POST":
-
-        authenticated_user = __get_request_user(request)
-
-        if authenticated_user is None:
-            return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
-        
-        try:
-            # Obtener campos y validar presencia
-            tipo_disp = request.POST.get("tipo_dispositivo")
-            id_disp_raw = request.POST.get("id_dispositivo")
-            observaciones = request.POST.get("observaciones")
-            portes = request.POST.get("portes")
-            transporte = request.POST.get("transporte")
-
-            if not all([tipo_disp, id_disp_raw, observaciones, portes, transporte]):
-                return JsonResponse({"error": "Faltan campos obligatorios"}, status=400)
-
-            # Validar que sea número y convertir a int
-            if not id_disp_raw.isdigit():
-                return JsonResponse({"error": "El ID del dispositivo debe ser un número"}, status=400)
-
-            id_dispositivo = int(id_disp_raw)
-            if id_dispositivo < 1:
-                return JsonResponse({"error": "El ID del dispositivo debe ser mayor que 0"}, status=400)
-
-            ticket = Ticket.objects.create(
-                idUsuario=authenticated_user,
-                tipo_dispositivo=tipo_disp,
-                id_dispositivo=id_dispositivo,
-                observaciones=observaciones,
-                portes=portes,
-                empresa_transporte=transporte,
-                archivo=request.FILES.get("archivo"),
-                estado="no leido"
-            )
-
-            return JsonResponse({
-                "estado": "Ticket creado correctamente",
-                "id": ticket.id
-            }, status=201)
- 
-        except Exception as e:
-            return JsonResponse({
-                "success": False,
-                "error": str(e)
-            }, status=400)
-
-    else:
-        return JsonResponse({"message": "Método no permitido"}, status=405)
-
-
-
-# Registrar usuario (web)
-def registar_usuario_w(request):
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
@@ -233,12 +59,14 @@ def registar_usuario_w(request):
                 return render(request, 'registro.html', {
                     'error': 'El correo electrónico ya está en uso'
                 })
+            
 
-            # Obtener o crear la empresa
-            empresa_obj, _ = Empresa.objects.get_or_create(
-                nombre=empresa_nombre,
-                defaults={'encargado': username}
-            )
+            # Verificar si la empresa existe (ignorar mayúsculas/minúsculas)
+            empresa_obj = Empresa.objects.filter(nombre__iexact=empresa_nombre).first()
+            if not empresa_obj:
+                return render(request, 'registro.html', {
+                    'error': 'No existen empresas con este nombre'
+                })
 
             hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
             random_token = secrets.token_hex(16)
@@ -254,7 +82,9 @@ def registar_usuario_w(request):
 
             user.save()
 
-            return HttpResponseRedirect('/login/')
+            request.session['session_token'] = random_token
+
+            return HttpResponseRedirect('/tickets_usuario/')
         except Exception as e:
             return render(request, 'registro.html', {
                 'error': str(e)
@@ -264,9 +94,11 @@ def registar_usuario_w(request):
         return render(request, 'registro.html')
 
 
-
 # Iniciar sesión
 def iniciar_sesion(request):
+    if request.method == "GET":
+        return render(request, 'login.html')
+
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
@@ -319,17 +151,128 @@ def logout(request):
         return JsonResponse({"message": "Método no permitido"}, status=405)
 
 
-# Tickets de cada usuario
-def tickets_user(request):
-    if request.method == 'GET':
+# Crear ticket para web
+@csrf_exempt
+def crear_ticket(request):
+
+    if request.method == "GET":
+#        print("estoy en get")
+        # Verificar si el usuario está autenticado
+        authenticated_user = __get_request_user(request)
+        if authenticated_user is None:
+            return HttpResponseRedirect('/login/')
+        return render(request, 'crear_ticket.html', {'user': authenticated_user})
+
+    if request.method == "POST":
+#        print("estoy en post")
 
         authenticated_user = __get_request_user(request)
 
         if authenticated_user is None:
             return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
+        
+        try:
+            # Obtener campos y validar presencia
+            tipo_disp = request.POST.get("tipo_dispositivo")
+            id_disp_raw = request.POST.get("id_dispositivo")
+            observaciones = request.POST.get("observaciones")
+            portes = request.POST.get("portes")
+            transporte = request.POST.get("transporte")
 
-        tickets = Ticket.objects.filter(idUsuario=authenticated_user).values()
-        return JsonResponse(list(tickets), safe=False, status=200)
+            print(1)
+            if request.POST.get("portes") != "debido" and request.POST.get("portes") != "pagado":
+                print(request.POST)
+                return JsonResponse({"error": "Portes no válidos"}, status=400)
+
+
+            if not all([tipo_disp, id_disp_raw, observaciones, portes, transporte]):
+                return JsonResponse({"error": "Faltan campos obligatorios"}, status=400)
+
+            # Validar que sea número y convertir a int
+            if not id_disp_raw.isdigit():
+                return JsonResponse({"error": "El ID del dispositivo debe ser un número"}, status=400)
+
+            id_dispositivo = int(id_disp_raw)
+            if id_dispositivo < 1:
+                return JsonResponse({"error": "El ID del dispositivo debe ser mayor que 0"}, status=400)
+
+            ticket = Ticket.objects.create(
+                idUsuario=authenticated_user,
+                tipo_dispositivo=tipo_disp,
+                id_dispositivo=id_dispositivo,
+                observaciones=observaciones,
+                portes=portes,
+                empresa_transporte=transporte,
+                archivo=request.FILES.get("archivo"),
+                estado="no leido"
+            )
+
+            return JsonResponse({
+                "estado": "Ticket creado correctamente",
+                "id": ticket.id
+            }, status=201)
+ 
+        except Exception as e:
+            return JsonResponse({
+                "success": False,
+                "error": str(e)
+            }, status=402)
+
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
+# Tickets de cada usuario
+def tickets_usuario(request):
+    if request.method == 'GET':
+        authenticated_user = __get_request_user(request)
+        if authenticated_user is None:
+            return HttpResponseRedirect('/login/')
+
+        if authenticated_user.admin:
+            tickets = Ticket.objects.all()
+        elif authenticated_user.empresa.encargado == authenticated_user.username:
+            tickets = Ticket.objects.filter(idUsuario__empresa = authenticated_user.empresa)
+        else:
+            tickets = Ticket.objects.filter(idUsuario=authenticated_user)
+
+        filtros = {
+            'usuario': request.GET.get('usuario', '').strip(),
+            'id_dispositivo': request.GET.get('id_dispositivo', '').strip(),
+            'tipo_dispositivo': request.GET.get('tipo_dispositivo', '').strip(),
+            'estado': request.GET.get('estado', '').strip(),
+            'fecha': request.GET.get('fecha', '').strip(),
+        }
+
+        if filtros['usuario']:
+            tickets = tickets.filter(idUsuario__username__icontains=filtros['usuario'])
+
+        if filtros['id_dispositivo']:
+            if filtros['id_dispositivo'].isdigit():
+                tickets = tickets.filter(id_dispositivo=int(filtros['id_dispositivo']))
+            else:
+                tickets = tickets.filter(id_dispositivo__icontains=filtros['id_dispositivo'])
+
+        if filtros['tipo_dispositivo']:
+            tickets = tickets.filter(tipo_dispositivo=filtros['tipo_dispositivo'])
+
+        if filtros['estado']:
+            tickets = tickets.filter(estado=filtros['estado'])
+
+        if filtros['fecha']:
+            try:
+                fecha_obj = datetime.fromisoformat(filtros['fecha']).date()
+                tickets = tickets.filter(fecha_creacion__date=fecha_obj)
+            except ValueError:
+                pass
+
+        return render(request, 'tickets_usuario.html', {
+            'user': authenticated_user,
+            'tickets': tickets,
+            'filtros': filtros,
+            'tipo_dispositivo_choices': Ticket.TIPO_DISPOSITIVO_CHOICES,
+            'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
+        })
 
     else:
         return JsonResponse({"message": "Método no permitido"}, status=405)
@@ -381,115 +324,6 @@ def ticket_id(request, ticket_id):
 
     else:
         return JsonResponse({"message": "Método no permitido"}, status=405)
-
-
-def perfil_usuario (request):
-    authenticated_user = __get_request_user(request)
-    
-    if authenticated_user is None:
-        return JsonResponse({"error": "El token de sesión no es válido o no se ha enviado"}, status=401)
-
-
-    if request.method == "PUT":
-        try:
-            data = json.loads(request.body)
-        except ValueError:
-            return JsonResponse({"error": "JSON inválido"}, status=400)
-
-        username = data.get("username")
-        nombre = data.get("nombre")
-        empresa_nombre = data.get("empresa")
-        correo = data.get("correo")
-        password_actual = data.get("contrasena_actual")
-        password = data.get("contrasena_nueva")
-        confirm_password = data.get("contrasena_nueva_confirmar")
-
-        if password_actual and not bcrypt.checkpw(password_actual.encode('utf8'), authenticated_user.password.encode('utf8')):
-            return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
-
-        if username == "" or correo == "" or nombre == "" or empresa_nombre == "":
-            return JsonResponse({"error": "No se han proporcionado campos para actualizar"}, status=400)
-
-        # Validación de campos únicos excluyendo al usuario actual
-        if username:
-            if Usuario.objects.filter(username=username).exclude(id=authenticated_user.id).exists():
-                return JsonResponse({"error": "El nombre de usuario ya existe"}, status=409)
-            authenticated_user.username = username
-
-        if correo:
-            if Usuario.objects.filter(correo=correo).exclude(id=authenticated_user.id).exists():
-                return JsonResponse({"error": "El correo electrónico ya está en uso"}, status=409)
-            authenticated_user.correo = correo
-
-        if nombre is not None:
-            authenticated_user.nombre = nombre
-
-        if empresa_nombre is not None:
-            # Obtener o crear la empresa por nombre
-            empresa_obj, _ = Empresa.objects.get_or_create(
-                nombre=empresa_nombre,
-                defaults={'encargado': authenticated_user.username}
-            )
-            authenticated_user.empresa = empresa_obj
-
-        if password and password.strip() != "":
-            if password != confirm_password:
-                return JsonResponse({"error": "Las contraseñas no coinciden"}, status=400)
-            hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
-            authenticated_user.password = hashed_password
-
-        try:
-            authenticated_user.save()
-            return JsonResponse({"success": True}, status=200)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
-
-    else:
-        return JsonResponse({"message": "Método no permitido"}, status=405)
-
-
-
-def edit_password(request):
-    authenticated_user = __get_request_user(request)
-    
-    if authenticated_user is None:
-        return JsonResponse({"error": "El token de sesión no es válido o no se ha enviado"}, status=401)
-
-    
-    if request.method != PUT:
-        JsonResponse({"error": "Método no válido"}, status=405 )
-
-    else: 
-        try:
-            data = json.loads(request.body)
-        except ValueError:
-            return JsonResponse({"error": "JSON inválido"}, status=400)
-
-        password_actual_noHash = data.get("contrasena_actual")
-        password_noHash = data.get("contrasena_nueva")
-        confirm_password_noHash = data.get("contrasena_nueva_confirmar")
-
-        if password_actual_noHash and not bcrypt.checkpw(password_actual_noHash.encode('utf8'), authenticated_user.password.encode('utf8')):
-            return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
-        
-        if password_noHash == "" or password_noHash is None:
-            return JsonResponse({"error": "La nueva contraseña no puede estar vacía"}, status=401)
-    
-        if password_actual_noHash != confirm_password_noHash:
-            return JsonResponse({"error": "Las contraseñas no coinciden"}, status=401)
-
-        hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
-        
-
-
-        try:
-            authenticated_user.save()
-            return JsonResponse({"success": True}, status=200)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
-
-
-
 
 def ticket_pdf(request, ticket_id):
     from reportlab.lib.pagesizes import A4
@@ -598,3 +432,264 @@ def ticket_pdf(request, ticket_id):
         return JsonResponse({"error": f"Error al generar PDF: {str(e)}"}, status=500)
 
 
+
+def perfil(request):
+    authenticated_user = __get_request_user(request)
+    
+    if authenticated_user is None:
+        return JsonResponse({"error": "El token de sesión no es válido o no se ha enviado"}, status=401)
+
+    if request.method == "GET":
+        # Verificar si el usuario está autenticado
+        authenticated_user = __get_request_user(request)
+        if authenticated_user is None:
+            return HttpResponseRedirect('/login/')
+        
+        # Obtener los tickets del usuario usando la FK idUsuario
+        tickets = Ticket.objects.filter(idUsuario=authenticated_user)
+        
+        is_encargado = False
+        empresa = None
+        company_tickets = None
+        company_ticket_count = 0
+
+        if str(authenticated_user.empresa) and str(authenticated_user.empresa.encargado) == str(authenticated_user.username):
+            is_encargado = True
+            empresa = authenticated_user.empresa
+            company_tickets = Ticket.objects.filter(idUsuario__empresa=empresa)
+            company_ticket_count = company_tickets.count()
+
+
+        return render(request, 'perfil/perfil.html', {
+            'user': authenticated_user,
+            'tickets': tickets,
+            'is_encargado': is_encargado,
+            'empresa': empresa,
+            'company_tickets': company_tickets,
+            'company_ticket_count': company_ticket_count,
+        })
+
+
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return JsonResponse({"error": "JSON inválido"}, status=400)
+
+        username = data.get("username")
+        nombre = data.get("nombre")
+        empresa_nombre = data.get("empresa")
+        correo = data.get("correo")
+        password_actual = data.get("contrasena_actual")
+        password = data.get("contrasena_nueva")
+        confirm_password = data.get("contrasena_nueva_confirmar")
+
+        if password_actual and not bcrypt.checkpw(password_actual.encode('utf8'), authenticated_user.password.encode('utf8')):
+            return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
+
+        if username == "" or correo == "" or nombre == "" or empresa_nombre == "":
+            return JsonResponse({"error": "No se han proporcionado campos para actualizar"}, status=400)
+
+        # Validación de campos únicos excluyendo al usuario actual
+        if username:
+            if Usuario.objects.filter(username=username).exclude(id=authenticated_user.id).exists():
+                return JsonResponse({"error": "El nombre de usuario ya existe"}, status=409)
+            authenticated_user.username = username
+
+        if correo:
+            if Usuario.objects.filter(correo=correo).exclude(id=authenticated_user.id).exists():
+                return JsonResponse({"error": "El correo electrónico ya está en uso"}, status=409)
+            authenticated_user.correo = correo
+
+        if nombre is not None:
+            authenticated_user.nombre = nombre
+
+        if empresa_nombre is not None:
+            # Obtener o crear la empresa por nombre
+            empresa_obj, _ = Empresa.objects.get_or_create(
+                nombre=empresa_nombre,
+                defaults={'encargado': authenticated_user.username}
+            )
+            authenticated_user.empresa = empresa_obj
+
+        if password and password.strip() != "":
+            if password != confirm_password:
+                return JsonResponse({"error": "Las contraseñas no coinciden"}, status=400)
+            hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
+            authenticated_user.password = hashed_password
+
+        try:
+            authenticated_user.save()
+            return JsonResponse({"success": True}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
+def datos_usuario(request):
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    
+    return render(request, 'perfil/datos_usuario.html', {
+        'user': authenticated_user
+    })
+
+
+def contraseña(request):
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+
+    if request.method == "GET":    
+        # Verificar si el usuario está autenticado
+        return render(request, 'perfil/cambiar_contraseña.html', {
+            'user': authenticated_user
+        })
+    
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return JsonResponse({"error": "JSON inválido"}, status=400)
+
+        password_actual = data.get("contrasena_actual")
+        new_password = data.get("contrasena_nueva")
+        confirm_new_password = data.get("contrasena_nueva_confirmar")
+
+        if password_actual and not bcrypt.checkpw(password_actual.encode('utf8'), authenticated_user.password.encode('utf8')):
+            return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
+        
+        if new_password == "" or new_password is None:
+            return JsonResponse({"error": "La nueva contraseña no puede estar vacía"}, status=401)
+    
+        if new_password != confirm_new_password:
+            return JsonResponse({"error": "Las contraseñas no coinciden"}, status=401)
+
+        hashed_password = bcrypt.hashpw(new_password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
+        authenticated_user.password=hashed_password
+
+        try:
+            authenticated_user.save()
+            return JsonResponse({"success": True}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    else: 
+        JsonResponse({"error": "Método no válido"}, status=405 )
+
+        
+
+
+# MÉTODOS PARA LOS ENCARGADOS DE LAS EMPRESAS
+def empresa(request):
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+
+    # Que el usuario registrado sea encargado de la empresa
+    if not str(authenticated_user.empresa) or str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+        return HttpResponseRedirect('/perfil/')
+
+    empresa_obj = authenticated_user.empresa
+    empleados = Usuario.objects.filter(empresa=empresa_obj)
+    ticket_count = Ticket.objects.filter(idUsuario__empresa=empresa_obj).count()
+
+    return render(request, 'empresa.html', {
+        'user': authenticated_user,
+        'empresa': empresa_obj,
+        'empleados': empleados,
+        'ticket_count': ticket_count,
+    })
+
+def tickets_empresa(request):
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+
+    # Que el usuario registrado sea encargado de la empresa
+    if not str(authenticated_user.empresa) or str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+        return HttpResponseRedirect('/perfil/')
+
+    empresa_obj = authenticated_user.empresa
+    tickets = Ticket.objects.filter(idUsuario__empresa=empresa_obj)
+
+    return render(request, 'tickets_empresa.html', {
+        'user': authenticated_user,
+        'tickets': tickets,
+        'empresa': empresa_obj,
+    })
+
+#MÉTODOS PARA ADMINISTRADORES
+
+def usuarios(request):
+    if request.method == "GET":
+
+        authenticated_user = __get_request_user(request)
+
+        if authenticated_user is None or authenticated_user.admin == False:
+            return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
+        
+    
+def usuario_id (request):
+    if request.method == "GET":
+
+        authenticated_user = __get_request_user(request)
+
+    if authenticated_user is None or authenticated_user.admin == False:
+        return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
+        
+
+def empresas(request):
+    if request.method == "GET":
+
+        authenticated_user = __get_request_user(request)
+
+        if authenticated_user is None or authenticated_user.admin == False:
+            return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
+
+# admin
+def comprobar_tickets(request):
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    if authenticated_user.admin == False:
+        return render (request, "error.html")
+    return render(request, 'admin/comprobar_tickets.html')
+
+def gestion_empresas(request):
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    if authenticated_user.admin == False:
+        return render (request, "error.html")
+    
+    empresas = Empresa.objects.all().order_by('nombre')
+    return render(request, 'admin/empresas.html', {
+        'empresas': empresas
+    })
+
+def gestion_usuarios(request):
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    if authenticated_user.admin == False:
+        return render (request, "error.html")
+    
+    return render(request, 'admin/usuarios.html')
+
+def gestion_usuario_id(request):
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    if authenticated_user.admin == False:
+        return render (request, "error.html")
+    
+    return render(request, 'admin/usuario_id.html')

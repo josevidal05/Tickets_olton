@@ -18,7 +18,7 @@ def validate_image_file(value):
 
 class Empresa(models.Model):
     nombre = models.CharField(max_length=150, unique=True)
-    encargado = models.CharField(max_length=100)
+    encargado = models.ForeignKey('Usuario', on_delete=models.SET_NULL, related_name='empresas', null=True, blank=True)
     numero_tickets = models.IntegerField(default=0)
 
     def __str__(self):
@@ -29,9 +29,9 @@ class Usuario(models.Model):
     username = models.CharField(max_length=50, unique=True)
     password = models.CharField(max_length=155)
     nombre = models.CharField(max_length=100)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='usuarios')
+    empresa = models.ForeignKey('Empresa', on_delete=models.CASCADE, related_name='usuarios')
     correo = models.EmailField(max_length=254, unique=True)
-    token_sesion = models.CharField(max_length=150)
+    token_sesion = models.CharField(max_length=150, null=True)
     admin = models.BooleanField(default=False)
 
     def __str__(self):
@@ -86,7 +86,7 @@ class Ticket(models.Model):
         default='no leido'
     )
 
-    idUsuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='tickets')
+    idUsuario = models.ForeignKey('Usuario', on_delete=models.CASCADE, related_name='tickets')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

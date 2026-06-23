@@ -5,7 +5,6 @@
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/datos_usuario.css' %}">
-<link rel="stylesheet" href="{% static 'css/cambiar_contraseña.css' %}">
 <!-- No modal: use browser confirm() -->
 {% endblock %}
 
@@ -71,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
         const csrftoken = getCookie('csrftoken');
 
-        fetch('/perfil_usuario/editar_contraseña/', {
+        fetch('/cambiar_contraseña/', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

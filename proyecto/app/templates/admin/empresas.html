@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Empresas{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/empresas.css' %}">
+
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<div class="titulo">
+    <h1>Empresas</h1>
+    <button type="button" class="btn-inicio" onclick="window.location.href='/';">Crear nueva empresa</button>
+
+</div>
+
+<!-- 
+<div class="filtros">
+    <button type="button" class="filter-toggle" aria-expanded="false">Filtros ▾</button>
+
+    <div class="filter-panel" aria-hidden="true">
+        <form method="get" class="filtro-form">
+            <div class="filtro-item">
+                <label for="usuario">Usuario</label>
+                <input id="usuario" name="usuario" type="text" value="{{ filtros.usuario }}" placeholder="Usuario">
+            </div>
+            <div class="filtro-item">
+                <label for="id_dispositivo">ID dispositivo</label>
+                <input id="id_dispositivo" name="id_dispositivo" type="text" value="{{ filtros.id_dispositivo }}" placeholder="ID dispositivo">
+            </div>
+            <div class="filtro-item">
+                <label for="tipo_dispositivo">Tipo dispositivo</label>
+                <select id="tipo_dispositivo" name="tipo_dispositivo">
+                    <option value="">Todos</option>
+                    {% for value, label in tipo_dispositivo_choices %}
+                    <option value="{{ value }}" {% if filtros.tipo_dispositivo == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filtro-item">
+                <label for="estado">Estado</label>
+                <select id="estado" name="estado">
+                    <option value="">Todos</option>
+                    {% for value, label in estado_choices %}
+                    <option value="{{ value }}" {% if filtros.estado == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filtro-item">
+                <label for="fecha">Fecha</label>
+                <input id="fecha" name="fecha" type="date" value="{{ filtros.fecha }}">
+            </div>
+            <div class="filtro-item filtro-botones">
+                <button type="submit">Filtrar</button>
+                <a href="" class="btn-limpiar">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+-->
+
+<div class="tabla_tickets">
+    <table>
+        <tr class="cabecera_tabla">
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Encargado</th>
+            <th>Nº Tickets</th>
+            <th>Nº Empleados</th>
+        </tr>
+        {% for ticket in tickets %}
+        <tr class="fila_tabla" onclick="window.location='/empresa/{{ empresa.id }}/';" style="cursor:pointer;">
+            <td>{{ empresa.id }}</td>
+            <td>{{ empresa.nombre }}</td>
+            <td>{{ empresa.encargado }}</td>
+            <td>{{ empresa.numero_tickets }}</td>
+
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+
+
+
+{% endblock %}

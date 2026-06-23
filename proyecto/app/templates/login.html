@@ -19,9 +19,7 @@
     <form method="POST" action="{% url 'iniciar_sesion' %}">
         {% csrf_token %}
 
-        {% if error %}
-            <alert class="alert alert-danger">{{ error }}</alert>
-        {% endif %}
+
 
         <div class="username">
             <p>Nombre de usuario:</p>
@@ -32,12 +30,23 @@
             <p>Contraseña:</p>
             <input type="password" name="password" required>
         </div>
-
+ 
         <button type="submit">Iniciar sesión</button>
 
     </form>
 
     <p>¿No tienes cuenta? <a href="/registro/">Regístrate</a> </p>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var msg = "{{ error|escapejs }}";
+                if (msg) {
+                    // Mostrar alerta sin interferir con el renderizado de la página
+                    alert(msg);
+                }
+            });
+        </script>
+
 
 
 

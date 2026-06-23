@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ticket #{{ ticket.id }} {% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/ticket.css' %}">
+
+{% endblock %}
+
+{% block content %}
+
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% else %}
+
+
+
+<div class="container">
+
+    <h2>Detalle del Ticket #{{ ticket.id }}</h2>
+    <form id="ticket-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>ID</label>
+            <div class="form-value" id="id">{{ ticket.id }}</div>
+        </div>
+        
+        <div class="form-group">
+            <label>Empresa</label>
+            <div class="form-value">{{ ticket.idUsuario.empresa.nombre }}</div>
+        </div>
+        
+        <div class="form-group">
+            <label>Contacto</label>
+            <div class="form-value">{{ ticket.idUsuario.username }}</div>
+        </div>
+        
+        <div class="form-group">
+            <label>Tipo de dispositivo</label>
+            <div class="form-field">
+                <span id="tipo_dispositivo-display">{{ ticket.get_tipo_dispositivo_display }}</span>
+                <select id="tipo_dispositivo-edit" name="tipo_dispositivo" style="display:none;">
+                    <option value="maquina" {% if ticket.tipo_dispositivo == 'maquina' %}selected{% endif %}>Máquina
+                    </option>
+                    <option value="tracker" {% if ticket.tipo_dispositivo == 'tracker' %}selected{% endif %}>Tracker
+                    </option>
+                    <option value="otro" {% if ticket.tipo_dispositivo == 'otro' %}selected{% endif %}>Otro</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>ID dispositivo</label>
+
+            
+            <div class="form-field">
+                <span id="id_dispositivo-display">{{ ticket.id_dispositivo }}</span>
+                <input type="number" id="id_dispositivo-edit" name="id_dispositivo" value="{{ ticket.id_dispositivo }}"
+                    style="display:none;">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Observaciones</label>
+            <div class="form-field">
+                <span id="observaciones-display">{{ ticket.observaciones }}</span>
+                <textarea id="observaciones-edit" name="observaciones"
+                    style="display:none;">{{ ticket.observaciones }}</textarea>
+            </div>
+        </div>
+
+        <div id="archivo-div" class="form-group">
+             <label>Archivo adjunto</label>
+            <div class="form-field">
+                <span id="archivo-display">
+                    {% if ticket.archivo %}
+                    <a href="{{ ticket.archivo.url }}" target="_blank">
+                        <img src="{{ ticket.archivo.url }}" alt="Imagen adjunta"
+                            style="max-width: 100%; max-height: 300px; display: block; margin-top: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <br>{{ ticket.archivo.name }}
+                    </a>
+                    {% else %}
+                    No hay archivo adjunto
+                    {% endif %}
+                </span>
+                <input type="file" id="archivo-edit" name="archivo" accept="image/*"
+                    style="display:none; margin-top: .5rem;">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Portes</label>
+            <div class="form-field">
+                <span id="portes-display">{{ ticket.get_portes_display }}</span>
+                <select id="portes-edit" name="portes" style="display:none;">
+                    <option value="pagado" {% if ticket.portes == 'pagado' %}selected{% endif %}>Pagado</option>
+                    <option value="debido" {% if ticket.portes == 'debido' %}selected{% endif %}>Debido</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Empresa de transporte</label>
+            <div class="form-field">
+                <span id="empresa_transporte-display">{{ ticket.empresa_transporte }}</span>
+                <input type="text" id="empresa_transporte-edit" name="empresa_transporte"
+                    value="{{ ticket.empresa_transporte }}" style="display:none;">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Estado</label>
+            <div class="form-value">{{ ticket.estado }}</div>
+        </div>
+        
+        <div class="form-group">
+            <label>Fecha de creación</label>
+            <div class="form-value">{{ ticket.fecha_creacion }}</div>
+        </div>
+    </form>
+
+    <div class="botones">
+        <button id="edit-btn">Editar</button>
+        <button id="save-btn" style="display:none;">Guardar Cambios</button>
+        <button id="cancel-btn" style="display:none;">Cancelar</button>
+        <button id="imprimir-ticket">Imprimir Ticket</button>
+        <button id="delete-btn">Eliminar Ticket</button>
+    </div>
+
+
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const form = document.getElementById('ticket-form');
+        const editBtn = document.getElementById('edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const imprimirBtn = document.getElementById('imprimir-ticket');
+
+        const setEditMode = isEditing => {
+            document.querySelectorAll('[id$="-display"]').forEach(el => {
+                el.style.display = isEditing ? 'none' : 'inline';
+            });
+            document.querySelectorAll('[id$="-edit"]').forEach(el => {
+                el.style.display = isEditing ? 'inline' : 'none';
+            });
+
+            editBtn.style.display = isEditing ? 'none' : 'inline';
+            saveBtn.style.display = isEditing ? 'inline' : 'none';
+            cancelBtn.style.display = isEditing ? 'inline' : 'none';
+            deleteBtn.style.display = isEditing ? 'none' : 'inline';
+            imprimirBtn.style.display = isEditing ? 'none' : 'inline';
+        };
+
+        const showAlert = (message, isError = false) => {
+            if (isError) {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
+            window.alert(message);
+        };
+
+        const sendRequest = async (method, body) => {
+            const headers = { 'X-CSRFToken': csrfToken };
+            if (body && typeof body === 'string') {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            const response = await fetch(window.location.href, {
+                method,
+                headers,
+                body,
+                credentials: 'same-origin'
+            });
+
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (error) {
+                throw new Error(`Respuesta inválida del servidor (${response.status}): ${text}`);
+            }
+        };
+
+        editBtn.addEventListener('click', () => setEditMode(true));
+
+        cancelBtn.addEventListener('click', () => setEditMode(false));
+
+        saveBtn.addEventListener('click', async () => {
+            try {
+                const payload = {
+                    tipo_dispositivo: document.getElementById('tipo_dispositivo-edit').value,
+                    id_dispositivo: document.getElementById('id_dispositivo-edit').value,
+                    observaciones: document.getElementById('observaciones-edit').value,
+                    portes: document.getElementById('portes-edit').value,
+                    empresa_transporte: document.getElementById('empresa_transporte-edit').value,
+                };
+
+                const result = await sendRequest('PUT', JSON.stringify(payload));
+                if (!result.success) {
+                    throw new Error(result.error || 'Error al actualizar el ticket.');
+                }
+                showAlert('Ticket actualizado correctamente.');
+                location.reload();
+            } catch (error) {
+                showAlert(error.message, true);
+            }
+        });
+
+        deleteBtn.addEventListener('click', async () => {
+            if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
+                return;
+            }
+
+            try {
+                const result = await sendRequest('DELETE');
+                if (!result.success) {
+                    throw new Error(result.error || 'Error al eliminar el ticket.');
+                }
+                showAlert('Ticket eliminado correctamente.');
+                window.location.href = '/perfil/';
+            } catch (error) {
+                showAlert(error.message, true);
+            }
+        });
+
+        imprimirBtn.addEventListener('click', async () => {
+            try {
+                const ticketId = document.getElementById('id').textContent.trim();
+                const response = await fetch(`/tickets/${ticketId}/pdf/`, {
+                    method: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}: Error al generar el PDF`);
+                }
+
+                const blob = await response.blob();
+                
+                // Verificar que el blob sea válido
+                if (blob.size === 0) {
+                    throw new Error('El archivo PDF está vacío.');
+                }
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `ticket_${ticketId}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                showAlert('Ticket descargado correctamente.');
+            } catch (error) {
+                showAlert(`Error al descargar el PDF: ${error.message}`, true);
+            }
+        });
+    });
+</script>
+
+{% endblock %}
