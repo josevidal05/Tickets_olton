@@ -170,7 +170,7 @@ async function guardarCambios() {
         }
 
         alert('Datos guardados correctamente.');
-        window.location.reload();
+        window.location.href = '/perfil/';
     } catch (error) {
         showError('Error al guardar los datos.');
         console.error(error);

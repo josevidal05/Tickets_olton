@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Registrar empresa{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+
+
+    <div class="titulo">
+        <h1>Registrar empresa</h1>
+        <h4>Introduzca los datos</h4>
+    </div>
+
+
+    <form method="POST" action="{% url 'crear_empresa' %}">
+        {% csrf_token %}
+
+        <div class="nombre">
+            <p>Nombre:*</p>
+            <input type="text" name="nombre" required>
+        </div>
+
+        <div class="encargado">
+            <p>Encargado:</p>
+            <input type="text" name="encargado">
+        </div>
+
+        
+        <div class="correo"> 
+            <p>Correo electrónico:</p>
+            <input type="email" name="correo">
+        </div>
+
+
+        <button type="submit" class="registrar-empresa">Registrar empresa</button>
+        <a href="/gestion_empresas/" class="volver">Volver</a>
+
+    </form>
+    
+    
+
+{% endblock %}

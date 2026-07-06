@@ -1,0 +1,152 @@
+h1 {
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    color: #1f3f75;
+    text-align: center;
+
+}
+
+h4 {
+    font-size: 1.05rem;
+    color: #4f658c;
+    font-weight: 500;
+    text-align: center;
+}
+
+.empresa-detalle {
+    width: min(980px, 92%);
+    margin: 30px auto 24px;
+    padding: 28px 30px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 24px 70px rgba(24, 45, 88, 0.08);
+}
+
+.empresa-detalle h2 {
+    color: #1f3f75;
+    font-size: clamp(1.5rem, 2vw, 2rem);
+    margin-bottom: 16px;
+    font-weight: 700;
+}
+
+.empresa-detalle p {
+    color: #334165;
+    font-size: 1rem;
+    margin: 12px 0;
+    display: grid;
+    gap: 6px;
+}
+
+.empresa-detalle strong {
+    color: #1f3f75;
+    font-weight: 700;
+}
+
+.empresa-empleados {
+    width: min(980px, 92%);
+    margin: 24px auto;
+    padding: 28px 30px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 24px 70px rgba(24, 45, 88, 0.08);
+}
+
+.empresa-empleados h3 {
+    color: #1f3f75;
+    font-size: 1.4rem;
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+
+.empresa-empleados ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.empresa-empleados li {
+    padding: 14px 16px;
+    background: #f8faff;
+    border-radius: 18px;
+    border: 1px solid #e7ecf5;
+    color: #334165;
+    font-size: 1rem;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.empresa-empleados li:hover {
+    background: #f0f5ff;
+    border-color: #d7dce8;
+}
+
+.empresa-empleados li:empty {
+    text-align: center;
+    color: #7d8fa3;
+    font-style: italic;
+}
+
+.botones {
+    width: min(980px, 92%);
+    margin: 30px auto 60px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.botones .btn {
+    padding: 16px 28px;
+    border-radius: 18px;
+    border: none;
+    background: linear-gradient(135deg, #2d66ff 0%, #57b1ff 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 16px 30px rgba(45, 102, 255, 0.22);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.botones .btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.98;
+}
+
+.botones .btn:last-child {
+    background: linear-gradient(135deg, #57b1ff 0%, #2d66ff 100%);
+}
+
+@media (max-width: 760px) {
+    .empresa-detalle,
+    .empresa-empleados,
+    .botones {
+        width: min(600px, 96%);
+        padding: 20px 22px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        margin-top: 18px;
+    }
+
+    .empresa-empleados li {
+        padding: 12px 14px;
+        font-size: 0.95rem;
+    }
+
+    .botones {
+        flex-direction: column;
+        gap: 12px;
+        margin: 20px auto 40px;
+    }
+
+    .botones .btn {
+        width: 100%;
+        padding: 14px 24px;
+    }
+}

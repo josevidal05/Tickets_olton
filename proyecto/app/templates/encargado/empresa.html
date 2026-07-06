@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ empresa.nombre }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/datos_empresa.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>{{ empresa.nombre }}</h1>
+<h2>Datos de empresa</h2>
+
+<div class="datos-empresa">
+    {% csrf_token %}
+
+    <div class="nombre">
+        <p>Nombre:</p>
+        <p>{{ empresa.nombre }}</p>
+        <input type="text" name="nombre" value="{{ empresa.nombre }}" required hidden>
+    </div>
+
+    <div class="encargado">
+        <p>Encargado:</p>
+        <p>{{ empresa.encargado }}</p>
+        <input type="text" name="encargado" value="{{ empresa.encargado }}" required hidden>
+    </div>
+
+    <div class="n_tickets">
+        <p>Número de tickets:</p>
+        <p>{{ empresa.numero_tickets }}</p>
+    </div>
+
+    <div class="correo"> 
+        <p>Correo electrónico:</p>
+        <p>{{ empresa.correo }}</p>
+        <input type="text" name="correo" value="{{ empresa.correo }}" required hidden>
+    </div>
+    
+
+    <a href="#" class="editar">Editar</a>
+    
+    <a href="/gestion_empresas/" class="volver">Volver</a>
+
+    <a href="#" class="eliminar-empresa">Eliminar empresa</a>
+</div>
+
+<script>
+const datosEmpresaDiv = document.querySelector('.datos-empresa');
+const editarLink = datosEmpresaDiv.querySelector('.editar'); 
+const volverLink = datosEmpresaDiv.querySelector('.volver');
+const deleteBtn = datosEmpresaDiv.querySelector('.eliminar-empresa');
+const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+
+const empresaId = "{{ empresa.id }}";
+const originalData = {
+    nombre: getInputValue('input[name="nombre"]'),
+    encargado: getInputValue('input[name="encargado"]'),
+    // numero_tickets: getInputValue('input[name="numero_tickets"]'),
+    correo: getInputValue('input[name="correo"]')
+};
+
+function getInputValue(selector) {
+    const input = datosEmpresaDiv.querySelector(selector);
+    return input ? input.value.trim() : '';
+}
+
+function restoreOriginalValues() {
+    const nombreInput = datosEmpresaDiv.querySelector('input[name="nombre"]');
+    const encargadoInput = datosEmpresaDiv.querySelector('input[name="encargado"]');
+    // const ticketsInput = datosEmpresaDiv.querySelector('input[name="numero_tickets"]');
+    const correoInput = datosEmpresaDiv.querySelector('input[name="correo"]');
+
+
+    if (nombreInput) nombreInput.value = originalData.nombre;
+    if (encargadoInput) encargadoInput.value = originalData.encargado;
+    // if (ticketsInput) ticketsInput.value = originalData.numero_tickets;
+    if (correoInput) correoInput.value = originalData.correo;
+
+}
+
+function setEditingMode(editing) {
+    const fieldClasses = ['.nombre', '.encargado', '.correo', 'telefono'];
+    fieldClasses.forEach(fieldClass => {
+        const container = datosEmpresaDiv.querySelector(fieldClass);
+        if (!container) return;
+        const text = container.querySelector('p:nth-child(2)');
+        const input = container.querySelector('input');
+        if (text) text.style.display = editing ? 'none' : 'block';
+        if (input) {
+            input.hidden = !editing;
+            input.style.display = editing ? 'block' : 'none';
+        }
+    });
+
+    if (volverLink) {
+        if (editing) {
+            volverLink.textContent = 'Cancelar';
+            volverLink.href = '#';
+        } else {
+            volverLink.textContent = 'Volver';
+            volverLink.href = '/perfil/';
+        }
+    }
+}
+
+function showError(message) {
+    alert(message);
+}
+
+function clearError() {
+    const errorEl = datosEmpresaDiv.querySelector('.error-message');
+    if (errorEl) {
+        errorEl.remove();
+    }
+}
+
+async function eliminarEmpresa() {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta empresa?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/empresa/`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfTokenInput ? csrfTokenInput.value : ''
+            },
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error || data.message || 'Error al eliminar la empresa.');
+        }
+
+        alert('Empresa eliminada correctamente.');
+        window.location.href = '/gestion_empresas/';
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+
+async function guardarCambios() {
+    clearError();
+
+    const nombre = getInputValue('input[name="nombre"]');
+    const encargado = getInputValue('input[name="encargado"]');
+    // const numero_tickets = getInputValue('input[name="numero_tickets"]');
+    const correo = getInputValue('input[name="correo"]');
+
+    const payload = {
+        nombre,
+        encargado,
+        // numero_tickets,
+        correo
+    };
+
+    try {
+        const response = await fetch(`/empresa/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfTokenInput ? csrfTokenInput.value : ''
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            showError(data.error || data.message || 'No se pudieron guardar los cambios.');
+            return;
+        }
+
+        alert('Datos guardados correctamente.');
+        window.location.reload();
+    } catch (error) {
+        showError('Error al guardar los datos.');
+        console.error(error);
+    }
+}
+
+editarLink.addEventListener('click', function(event) {
+    event.preventDefault();
+
+    const isEditing = editarLink.dataset.editing === 'true';
+    if (!isEditing) {
+        setEditingMode(true);
+        editarLink.textContent = 'Guardar';
+        editarLink.dataset.editing = 'true';
+        return;
+    }
+
+    guardarCambios();
+});
+
+
+if (deleteBtn) {
+    deleteBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+        eliminarEmpresa();
+    });
+}
+
+
+if (volverLink) {
+    volverLink.addEventListener('click', function(event) {
+        const isEditing = editarLink.dataset.editing === 'true';
+        if (!isEditing) return;
+        event.preventDefault();
+        restoreOriginalValues();
+        setEditingMode(false);
+        editarLink.textContent = 'Editar';
+        editarLink.dataset.editing = 'false';
+    });
+}
+
+setEditingMode(false);
+</script>
+
+{% endblock %}

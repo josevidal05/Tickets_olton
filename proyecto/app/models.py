@@ -20,6 +20,7 @@ class Empresa(models.Model):
     nombre = models.CharField(max_length=150, unique=True)
     encargado = models.ForeignKey('Usuario', on_delete=models.SET_NULL, related_name='empresas', null=True, blank=True)
     numero_tickets = models.IntegerField(default=0)
+    correo = models.CharField(max_length=254, unique=True, null=True)
 
     def __str__(self):
         return self.nombre

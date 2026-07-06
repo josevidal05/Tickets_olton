@@ -110,9 +110,22 @@
             </div>
         </div>
 
+
         <div class="form-group">
             <label>Estado</label>
-            <div class="form-value">{{ ticket.estado }}</div>
+            <div class="form-field">
+                <span id="estado-display">{{ ticket.estado }}</span>
+                {% if is_admin %}
+                <select id="estado-edit" name="estado" style="display:none;">
+                    <option value="no leido" {% if ticket.estado == 'no leido' %}selected{% endif %}>No leído</option>
+                    <option value="leido" {% if ticket.estado == 'leido' %}selected{% endif %}>Leído</option>
+                    <option value="abierto" {% if ticket.estado == 'abierto' %}selected{% endif %}>Abierto</option>
+                    <option value="cerrado" {% if ticket.estado == 'cerrado' %}selected{% endif %}>Cerrado</option>
+                </select>
+                {% else %}
+                <span id="estado-edit" style="display: none;">{{ ticket.estado }}</span>
+                {% endif %}
+            </div>
         </div>
         
         <div class="form-group">
@@ -200,6 +213,7 @@
                     observaciones: document.getElementById('observaciones-edit').value,
                     portes: document.getElementById('portes-edit').value,
                     empresa_transporte: document.getElementById('empresa_transporte-edit').value,
+                    estado: document.getElementById('estado-edit').value,
                 };
 
                 const result = await sendRequest('PUT', JSON.stringify(payload));
@@ -233,7 +247,7 @@
         imprimirBtn.addEventListener('click', async () => {
             try {
                 const ticketId = document.getElementById('id').textContent.trim();
-                const response = await fetch(`/tickets/${ticketId}/pdf/`, {
+                const response = await fetch(`/ticket/${ticketId}/pdf/`, {
                     method: 'GET',
                     headers: { 'X-CSRFToken': csrfToken },
                     credentials: 'same-origin'
@@ -254,7 +268,7 @@
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `ticket_${ticketId}.pdf`;
+                link.download = `ticket_${ticketId}.zip`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);

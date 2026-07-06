@@ -16,40 +16,44 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from app import views, views_admin, views_ad
+from app import views, views_ad
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    # urls para web
+    # URLS PARA WEB
+
+    # urls de sesiones
     path('login/', views.iniciar_sesion, name='iniciar_sesion'),
     path("registro/", views.registar_usuario, name='registrar_usuario'),
     path('logout/', views.logout, name='logout'),
 
+    #urls de tickets
     path('', views.crear_ticket),
     path('tickets_usuario/', views.tickets_usuario),
     path("ticket/<int:ticket_id>/", views.ticket_id),
     path("ticket/<int:ticket_id>/pdf/", views.ticket_pdf),
     
+    #urls de perfil
     path("perfil/", views.perfil),
     path('datos_usuario/', views.datos_usuario),
     path("cambiar_contraseña/", views.contraseña, name='edit_password'),
- 
-    path('todos_usuarios/', views.usuarios),
-    path('todas_empresas/', views.empresas),
-    path('usuario_id/<int:usuario_id>', views.usuario_id),
 
     #urls para encargados de empresa
     path("empresa/", views.empresa),
     path("tickets_empresa/", views.tickets_empresa),
+    path('usuarios_empresa/', views.usuarios_empresa),
     
     # urls para admin
     path('admin/', admin.site.urls),
-    path('gestion/', views.comprobar_tickets),
-    path('usuarios/', views.gestion_usuarios),
-    path('empresas/', views.gestion_empresas),
-    path('usuario/<int:usuario_id>', views.gestion_usuario_id),
-
+    path('gestion_tickets/', views.gestion_tickets),
+    path('gestion_usuarios/', views.gestion_usuarios),
+    path('crear_usuario/', views.crear_usuario_admin, name='registrar_usuario_admin'),
+    path('usuario/<int:usuario_id>/', views.usuario_id),
+    path('cambiar_contraseña/<int:usuario_id>/', views.contraseña_admin),
+    path('gestion_empresas/', views.gestion_empresas),
+    path('empresa/<int:empresa_id>/', views.empresa_id),
+    path('crear_empresa/', views.crear_empresa, name='crear_empresa'),
 
 
     

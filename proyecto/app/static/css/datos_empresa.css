@@ -25,7 +25,7 @@ h1, h2, h3, h4 {
 }
 
 
-.datos-usuario {
+.datos-empresa {
     max-width: 880px;
     margin: 30px auto 48px;
     padding: 32px 34px;
@@ -37,13 +37,10 @@ h1, h2, h3, h4 {
     border: 1px solid rgba(82, 118, 255, 0.12);
 }
 
-.datos-usuario .username,
-.datos-usuario .nombre,
-.datos-usuario .empresa,
-.datos-usuario .correo,
-.datos-usuario .administrador,
-.datos-usuario .password,
-.datos-usuario .confirm_password {
+.datos-empresa .n_tickets,
+.datos-empresa .nombre,
+.datos-empresa .encargado,
+.datos-empresa .correo {
     display: grid;
     gap: 10px;
     padding: 18px 18px;
@@ -52,21 +49,21 @@ h1, h2, h3, h4 {
     border: 1px solid #e6ecf7;
 }
 
-.datos-usuario p {
+.datos-empresa p {
     margin: 0;
     color: #22315a;
     font-weight: 700;
     font-size: 1rem;
 }
 
-.datos-usuario p + p {
+.datos-empresa p + p {
     color: #556680;
     font-weight: 500;
     line-height: 1.6;
     white-space: pre-wrap;
 }
 
-.datos-usuario input {
+.datos-empresa input {
     width: 100%;
     padding: 14px 16px;
     border-radius: 16px;
@@ -76,17 +73,14 @@ h1, h2, h3, h4 {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.administrador input{
-    width: auto;
-}
 
-.datos-usuario input:focus {
+.datos-empresa input:focus {
     outline: none;
     border-color: #5d84ff;
     box-shadow: 0 0 0 4px rgba(93, 132, 255, 0.14);
 }
 
-.datos-usuario a {
+.datos-empresa a {
     display: inline-flex;
     justify-content: center;
     align-items: center;
@@ -98,27 +92,27 @@ h1, h2, h3, h4 {
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
-.datos-usuario .editar {
+.datos-empresa .editar {
     background: linear-gradient(135deg, #3d78ff 0%, #5db3ff 100%);
     color: #ffffff;
 }
 
-.datos-usuario .editar:hover {
+.datos-empresa .editar:hover {
     transform: translateY(-2px);
     box-shadow: 0 16px 32px rgba(61, 120, 255, 0.26);
 }
 
-.datos-usuario .volver {
+.datos-empresa .volver {
     background: #f3f6ff;
     color: #243a6a;
     border: 1px solid #dbe4ff;
 }
 
-.datos-usuario .volver:hover {
+.datos-empresa .volver:hover {
     background: #e6edff;
 }
 
-.datos-usuario .eliminar-usuario{
+.datos-empresa .eliminar-empresa{
     margin-top: 25px;
     padding: 14px 32px;
     font-size: 1rem;
@@ -131,29 +125,26 @@ h1, h2, h3, h4 {
     transition: transform 0.24s ease, box-shadow 0.24s ease, opacity 0.24s ease;
 }
 
-.datos-usuario .eliminar-usuario:hover {
+.datos-empresa .eliminar-empresa:hover {
     transform: translateY(-2px);
     box-shadow: 0 18px 30px rgba(214, 51, 128, 0.24);
     opacity: 0.98;
 }
 
-/*.datos-usuario .password,
-.datos-usuario .confirm_password {
+/*.datos-empresa .password,
+.datos-empresa .confirm_password {
     display: none;
 }*/
 
 @media (max-width: 720px) {
-    .datos-usuario {
+    .datos-empresa {
         padding: 24px 20px;
     }
 
-    .datos-usuario .username,
-    .datos-usuario .nombre,
-    .datos-usuario .administrador,
-    .datos-usuario .empresa,
-    .datos-usuario .correo,
-    .datos-usuario .password,
-    .datos-usuario .confirm_password {
+    .datos-empresa .n_tickets,
+    .datos-empresa .nombre,
+    .datos-empresa .encargado,
+    .datos-empresa .correo{
         padding: 16px;
     }
 }

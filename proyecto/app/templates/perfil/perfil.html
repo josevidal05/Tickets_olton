@@ -19,7 +19,7 @@
 
 <div class="opciones">
 
-    <a href="/datos_usuario" class="mis_datos">
+    <a href="/datos_usuario/" class="mis_datos">
         <div class="contenido_a">
             <p>Mis datos</p>
             <p>></p>
@@ -28,7 +28,7 @@
     </a>
 
 
-    <a href="/tickets_usuario" class="mis_tickets">
+    <a href="/tickets_usuario/" class="mis_tickets">
         <div class="contenido_a">
             <p>Mis tickets</p>
             <p>></p>
@@ -36,19 +36,50 @@
     </a>
 
     {% if is_encargado %}
-    <a href="/empresa" class="mi_empresa">
+    <a href="/empresa/" class="mi_empresa">
         <div class="contenido_a">
-            <p>Empresa</p>
+            <p>Mi empresa</p>
             <p>></p>
         </div>
     </a>
 
-    <a href="/tickets_empresa" class="tickets_empresa">
+    <a href="/tickets_empresa/" class="tickets_empresa">
         <div class="contenido_a">
             <p>Tickets empresa</p>
             <p>></p>
         </div>
     </a>
+
+    <a href="/usuarios_empresa/" class="tickets_empresa">
+        <div class="contenido_a">
+            <p>Usuarios empresa</p>
+            <p>></p>
+        </div>
+    </a>
+    {% endif %}
+
+    {% if is_admin %}
+    <a href="/gestion_empresas/" class="todas_empresas">
+        <div class="contenido_a">
+            <p>Gestión de empresas</p>
+            <p>></p>
+        </div>
+    </a>
+
+    <a href="/gestion_usuarios/" class="todos_usuarios">
+        <div class="contenido_a">
+            <p>Gestión de usuarios</p>
+            <p>></p>
+        </div>
+    </a>
+
+    <a href="/gestion_tickets/" class="todos_tickets">
+        <div class="contenido_a">
+            <p>Gestión de tickets</p>
+            <p>></p>
+        </div>
+    </a>
+
     {% endif %}
 </div>
 

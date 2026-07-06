@@ -2,7 +2,7 @@
 {% load static %}
 
 
-{% block title %}Gestión empresas{% endblock %}
+{% block title %}Usuarios empresa{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/empresas.css' %}">
 
@@ -14,8 +14,8 @@
 {% block content %}
 
 <div class="titulo">
-    <h1>Gestión de empresas</h1>
-    <button type="button" class="btn-inicio" onclick="window.location.href='/crear_empresa/';">Crear nueva empresa</button>
+    <h1>Usuarios de empresa</h1>
+    <button type="button" class="btn-inicio" onclick="window.location.href='/';">Crear nuevo usuario</button>
 
 </div>
 
@@ -69,25 +69,23 @@
         <tr class="cabecera_tabla">
             <th>ID</th>
             <th>Nombre</th>
-            <th>Encargado</th>
-            <th>Nº Tickets</th>
+            <th>Usuario</th>
+            <th>Empresa</th>
             <th>Correo</th>
         </tr>
-        {% for empresa in empresas %}
-        <tr class="fila_tabla" onclick="window.location='/empresa/{{ empresa.id }}/';" style="cursor:pointer;">
-            <td>{{ empresa.id }}</td>
-            <td>{{ empresa.nombre }}</td>
-            <td>{{ empresa.encargado }}</td>
-            <td>{{ empresa.numero_tickets }}</td>
-            <td>{{ empresa.correo }}</td>
+        {% for usuario in usuarios %}
+        <tr class="fila_tabla" onclick="window.location='/usuario/{{ usuario.id }}/';" style="cursor:pointer;">
+            <td>{{ usuario.id }}</td>
+            <td>{{ usuario.nombre }}</td>
+            <td>{{ usuario.username }}</td>
+            <td>{{ usuario.empresa }}</td>
+            <td>{{ usuario.correo }}</td>
+
 
         </tr>
         {% endfor %}
     </table>
 </div>
-
-
-
 
 
 {% endblock %}

@@ -86,6 +86,21 @@ p a:hover {
     color: #152e6f;
 }
 
+.volver {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 14px 0;
+    border-radius: 18px;
+    text-decoration: none;
+    font-weight: 700;
+
+    background: #f3f6ff;
+    color: #243a6a;
+    border: 1px solid #dbe4ff;
+}
+
 @media (max-width: 540px) {
     form {
         padding: 24px 20px;
