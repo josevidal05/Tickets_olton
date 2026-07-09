@@ -121,7 +121,7 @@ async function eliminarEmpresa() {
     }
 
     try {
-        const response = await fetch(`/empresa/${empresaId}/`, {
+        const response = await fetch(`/datos_empresa/${empresaId}/`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ async function guardarCambios() {
     };
 
     try {
-        const response = await fetch(`/empresa/${empresaId}/`, {
+        const response = await fetch(`/datos_empresa/${empresaId}/`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

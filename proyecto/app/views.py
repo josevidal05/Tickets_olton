@@ -7,7 +7,7 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 import json
-from .models import Ticket, Usuario, Empresa
+from .models import Ticket, Usuario, Empresa, Dispositivo
 
 # Función para obtener el usuario autenticado 
 def __get_request_user(request):
@@ -29,11 +29,13 @@ def __get_request_user(request):
     
     return None
 
-
 # Registrar usuario
 def registar_usuario(request):
     if request.method == "GET":
-        return render(request, 'registro.html')
+        empresas = Empresa.objects.all()
+        return render(request, 'registro.html',{
+            "empresas": empresas
+        })
 
     if request.method == "POST":
         username = request.POST.get("username")
@@ -84,7 +86,7 @@ def registar_usuario(request):
 
             request.session['session_token'] = random_token
 
-            return HttpResponseRedirect('/tickets_usuario/')
+            return HttpResponseRedirect('/mis_tickets/')
         except Exception as e:
             return render(request, 'registro.html', {
                 'error': str(e)
@@ -115,7 +117,7 @@ def iniciar_sesion(request):
                 # Guardar el token en la sesión de Django
                 request.session['session_token'] = new_token
                 
-                return HttpResponseRedirect('/tickets_usuario/')
+                return HttpResponseRedirect('/mis_tickets/')
             
             else:
                 return render(request, 'login.html', {
@@ -154,23 +156,21 @@ def logout(request):
 # Crear ticket para web
 @csrf_exempt
 def crear_ticket(request):
-
+    # Verificar si el usuario está autenticado
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
     if request.method == "GET":
-#        print("estoy en get")
-        # Verificar si el usuario está autenticado
-        authenticated_user = __get_request_user(request)
-        if authenticated_user is None:
-            return HttpResponseRedirect('/login/')
-        return render(request, 'crear_ticket.html', {'user': authenticated_user})
+
+        dispositivos = Dispositivo.objects.all()
+
+        return render(request, 'crear_ticket.html', {
+            'user': authenticated_user,
+            'dispositivos': dispositivos,
+            })
 
     if request.method == "POST":
-#        print("estoy en post")
 
-        authenticated_user = __get_request_user(request)
-
-        if authenticated_user is None:
-            return JsonResponse({"error": "El token de sesión no se ha enviado o no es válido"}, status=401)
-        
         try:
             # Obtener campos y validar presencia
             tipo_disp = request.POST.get("tipo_dispositivo")
@@ -178,7 +178,6 @@ def crear_ticket(request):
             observaciones = request.POST.get("observaciones")
             portes = request.POST.get("portes")
             transporte = request.POST.get("transporte")
-
             
             if request.POST.get("portes") != "debido" and request.POST.get("portes") != "pagado":
                 print(request.POST)
@@ -195,10 +194,15 @@ def crear_ticket(request):
             id_dispositivo = int(id_disp_raw)
             if id_dispositivo < 1:
                 return JsonResponse({"error": "El ID del dispositivo debe ser mayor que 0"}, status=400)
+            
+            try:
+                tipo_dispositivo = Dispositivo.objects.filter(id=tipo_disp).first()
+            except Dispositivo.DoesNotExist:
+                return JsonResponse({"error": "El tipo de dispositivo no existe"}, status=400)
 
             ticket = Ticket.objects.create(
                 idUsuario=authenticated_user,
-                tipo_dispositivo=tipo_disp,
+                tipo_dispositivo=tipo_dispositivo,
                 id_dispositivo=id_dispositivo,
                 observaciones=observaciones,
                 portes=portes,
@@ -274,7 +278,7 @@ def tickets_usuario(request):
             'user': authenticated_user,
             'tickets': tickets,
             'filtros': filtros,
-            'tipo_dispositivo_choices': Ticket.TIPO_DISPOSITIVO_CHOICES,
+            # 'tipo_dispositivo_choices': Ticket.TIPO_DISPOSITIVO_CHOICES,
             'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
         })
 
@@ -294,17 +298,23 @@ def ticket_id(request, ticket_id):
             ticket = Ticket.objects.get(id=ticket_id)
         except Ticket.DoesNotExist:
             return render(request, 'ticket_id.html', {'error': 'El ticket no existe'})
+        
+        dispositivos = Dispositivo.objects.all()
 
-        es_encargado = str(authenticated_user.empresa.encargado) == str(authenticated_user.username)
+        is_encargado = str(authenticated_user.empresa.encargado) == str(authenticated_user.username)
+        is_admin = False
+        
+        if authenticated_user.tipo_usuario == "admin":
+            is_admin = True
 
-        if ticket.idUsuario != authenticated_user:
-            if authenticated_user.admin == False:
-                if es_encargado != True or ticket.idUsuario.empresa.nombre != authenticated_user.empresa.nombre:
-                    return render(request, 'error.html', {'error': 'No tienes permiso para ver este ticket'})
+        if ticket.idUsuario != authenticated_user and is_admin == False and is_encargado == False:
+            return render(request, 'error.html', {'error': 'No tienes permiso para ver este ticket'})
+
         
         return render(request, 'ticket_id.html', {
-            'ticket': ticket, 
-            "is_admin": authenticated_user.admin,
+            'ticket': ticket,
+            'dispositivos': dispositivos,
+            "is_admin": is_admin,
         })
 
 
@@ -350,7 +360,7 @@ def ticket_id(request, ticket_id):
         ticket.portes = data.get("portes", ticket.portes)
         ticket.empresa_transporte = data.get("empresa_transporte", ticket.empresa_transporte)
         
-        if authenticated_user.admin == True:
+        if authenticated_user.tipo_usuario == "admin":
             ticket.estado = data.get("estado", ticket.estado) 
         
         
@@ -377,7 +387,7 @@ def ticket_pdf(request, ticket_id):
     
     try:
         ticket = Ticket.objects.get(id=ticket_id)
-        if ticket.idUsuario != authenticated_user and not authenticated_user.admin:
+        if ticket.idUsuario != authenticated_user and authenticated_user.tipo_usuario != "admin":
             return JsonResponse({"error": "No tienes permiso para descargar este ticket"}, status=403)
     except Ticket.DoesNotExist:
         return JsonResponse({"error": "Ticket no encontrado"}, status=404)
@@ -504,31 +514,37 @@ def perfil(request):
         # Obtener los tickets del usuario usando la FK idUsuario
         tickets = Ticket.objects.filter(idUsuario=authenticated_user)
         
+        is_admin = False
+        is_taller = False        
         is_encargado = False
         empresa = None
-        company_tickets = None
-        company_ticket_count = 0
+        tickets_empresa = None
+        contador_tickets_empresa = 0
 
-        is_admin = False
+        
 
         if str(authenticated_user.empresa) and str(authenticated_user.empresa.encargado) == str(authenticated_user.username):
             is_encargado = True
             empresa = authenticated_user.empresa
-            company_tickets = Ticket.objects.filter(idUsuario__empresa=empresa)
-            company_ticket_count = company_tickets.count()
+            tickets_empresa = Ticket.objects.filter(idUsuario__empresa=empresa)
+            contador_tickets_empresa = tickets_empresa.count()
 
-        if authenticated_user.admin == True:
+        if authenticated_user.tipo_usuario == 'admin':
             is_admin = True
+        
+        if authenticated_user.tipo_usuario == "taller":
+            is_taller = True
 
 
         return render(request, 'perfil/perfil.html', {
             'user': authenticated_user,
             'tickets': tickets,
             'is_encargado': is_encargado,
+            'is_taller': is_taller,
             'is_admin': is_admin,
             'empresa': empresa,
-            'company_tickets': company_tickets,
-            'company_ticket_count': company_ticket_count,
+            'company_tickets': tickets_empresa,
+            'company_ticket_count': contador_tickets_empresa,
         })
 
 
@@ -658,6 +674,18 @@ def empresa(request):
         return HttpResponseRedirect('/perfil/')
 
     if request.method == "GET":
+        return render(request, 'encargado/menu_encargado.html')
+
+def datos_empresa(request):
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+
+    # Que el usuario registrado sea encargado de la empresa
+    if not str(authenticated_user.empresa) or str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+        return HttpResponseRedirect('/perfil/')
+
+    if request.method == "GET":
 
         empresa_obj = authenticated_user.empresa
         empleados = Usuario.objects.filter(empresa=empresa_obj)
@@ -722,7 +750,7 @@ def tickets_empresa(request):
     if request.method == 'GET':
 
         tickets = Ticket.objects.filter(idUsuario__empresa = authenticated_user.empresa)
-
+        dispositivos = Dispositivo.objects.all()
 
         filtros = {
             'usuario': request.GET.get('usuario', '').strip(),
@@ -758,7 +786,7 @@ def tickets_empresa(request):
             'user': authenticated_user,
             'tickets': tickets,
             'filtros': filtros,
-            'tipo_dispositivo_choices': Ticket.TIPO_DISPOSITIVO_CHOICES,
+            'dispositivos': dispositivos,
             'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
         })
         
@@ -786,16 +814,41 @@ def usuarios_empresa (request):
 
 
 #MÉTODOS PARA ADMINISTRADORES
+def administrador(request):
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    if authenticated_user.tipo_usuario != "admin":
+        return render (request, "error.html")
+    
+    if request.method == "GET":
+
+        is_admin = False
+
+        if authenticated_user.tipo_usuario == "admin":
+            is_admin = True
+
+
+        return render(request, 'admin/menu_admin.html', {
+            'user': authenticated_user,
+            "is_admin": is_admin,
+
+            
+        })
+
+
+
 def gestion_tickets(request):
     # Verificar si el usuario está autenticado
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.admin == False:
+    if authenticated_user.tipo_usuario != "admin":
         return render (request, "error.html")
 
     if request.method == "GET":
         tickets = Ticket.objects.all().order_by('idUsuario__empresa__nombre')
+        dispositivos = Dispositivo.objects.all()
 
         filtros = {
             'usuario': request.GET.get('usuario', '').strip(),
@@ -827,11 +880,11 @@ def gestion_tickets(request):
             except ValueError:
                 pass
 
-        return render(request, 'admin/tickets.html', {
+        return render(request, 'admin/gestion_tickets.html', {
             'user': authenticated_user,
             'tickets': tickets,
             'filtros': filtros,
-            'tipo_dispositivo_choices': Ticket.TIPO_DISPOSITIVO_CHOICES,
+            'dispositivos': dispositivos,
             'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
         })
 
@@ -841,14 +894,14 @@ def gestion_empresas(request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.admin == False:
+    if authenticated_user.tipo_usuario != "admin":
         return render (request, "error.html")
     
     if request.method == "GET":
     
         empresas = Empresa.objects.all().order_by('id')
         
-        return render(request, 'admin/empresas.html', {
+        return render(request, 'admin/gestion_empresas.html', {
             'empresas': empresas
         })
 
@@ -860,7 +913,7 @@ def empresa_id (request, empresa_id):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.admin == False:
+    if authenticated_user.tipo_usuario != "admin":
         return render (request, "error.html")
 
     if request.method == "GET":
@@ -949,7 +1002,7 @@ def crear_empresa(request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.admin == False:
+    if authenticated_user.tipo_usuario != "admin":
         return render (request, "error.html")
     
     if request.method == "GET":
@@ -1002,14 +1055,14 @@ def gestion_usuarios(request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.admin == False:
+    if authenticated_user.tipo_usuario == 'Admin':
         return render (request, "error.html")
     
     if request.method == "GET":
 
         usuarios = Usuario.objects.all().order_by('empresa')
     
-        return render(request, 'admin/usuarios.html',{
+        return render(request, 'admin/gestion_usuarios.html',{
             "usuarios" : usuarios
         }) 
 
@@ -1021,7 +1074,7 @@ def usuario_id(request, usuario_id):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.admin == False and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+    if authenticated_user.tipo_usuario != "admin" and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
         return render (request, "error.html")
     
         
@@ -1035,7 +1088,7 @@ def usuario_id(request, usuario_id):
         es_encargado = str(authenticated_user.empresa.encargado) == str(authenticated_user.username)
         print(es_encargado)
         
-        if authenticated_user.admin == False:
+        if authenticated_user.tipo_usuario != "admin":
             if es_encargado != True or usuario.empresa.nombre != authenticated_user.empresa.nombre:
                 return render(request, 'error.html', {'error': 'No tienes permiso para ver este usuario'})
         
@@ -1075,8 +1128,7 @@ def usuario_id(request, usuario_id):
         password_actual = data.get("contrasena_actual")
         password = data.get("contrasena_nueva")
         confirm_password = data.get("contrasena_nueva_confirmar")
-        admin_value = data.get("admin")
-
+        tipo_usuario = data.get("tipo_usuario")
 
         if password_actual and not bcrypt.checkpw(password_actual.encode('utf8'), authenticated_user.password.encode('utf8')):
             return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
@@ -1104,8 +1156,6 @@ def usuario_id(request, usuario_id):
             )
             usuario.empresa = empresa_obj
 
-        if admin_value is not None and authenticated_user.admin:
-            usuario.admin = bool(admin_value)
 
         if password and password.strip() != "":
             if password != confirm_password:
@@ -1130,7 +1180,7 @@ def contraseña_admin(request, usuario_id):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.admin == False:
+    if authenticated_user.tipo_usuario != "admin":
         return render (request, "error.html")
 
 
@@ -1188,7 +1238,9 @@ def crear_usuario_admin (request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.admin == False or str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+
+
+    if authenticated_user.tipo_usuario != 'admin' and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
         return render (request, "error.html")
     
 
@@ -1197,16 +1249,19 @@ def crear_usuario_admin (request):
         is_admin = False
         is_encargado = False
 
+        empresas = Empresa.objects.all().order_by('id')
 
-        if authenticated_user.admin == True:
+        if authenticated_user.tipo_usuario == 'admin':
             is_admin = True
         elif str(authenticated_user.empresa.encargado) == str(authenticated_user.username):
             is_encargado = True
+
 
         return render (request, 'admin/crear_usuario.html', {
             "is_admin": is_admin,
             "is_encargado": is_encargado,
             'user': authenticated_user,
+            'empresas': empresas,
         })
 
     if request.method == "POST":
@@ -1216,12 +1271,16 @@ def crear_usuario_admin (request):
         nombre = request.POST.get("nombre")
         empresa_nombre = request.POST.get("empresa")
         correo = request.POST.get("correo")
-        admin_flag = request.POST.get("admin") == "on"
+        tipo_usuario = request.POST.get("tipo_usuario")
+
+        is_admin = False
+        if authenticated_user.tipo_usuario == "admin":
+            is_admin = True
 
         if password != confirm_password:
             return render(request, 'admin/crear_usuario.html', {
                 'error': 'Las contraseñas no coinciden',
-                'is_admin': authenticated_user.admin,
+                'is_admin': is_admin,
                 'is_encargado': str(authenticated_user.empresa.encargado) == str(authenticated_user.username),
                 'user': authenticated_user,
             })
@@ -1231,7 +1290,7 @@ def crear_usuario_admin (request):
             if Usuario.objects.filter(username=username).exists():
                 return render(request, 'admin/crear_usuario.html', {
                     'error': 'El nombre de usuario ya existe',
-                    'is_admin': authenticated_user.admin,
+                    'is_admin': is_admin,
                     'is_encargado': str(authenticated_user.empresa.encargado) == str(authenticated_user.username),
                     'user': authenticated_user,
                 })
@@ -1239,7 +1298,7 @@ def crear_usuario_admin (request):
             if Usuario.objects.filter(correo=correo).exists():
                 return render(request, 'admin/crear_usuario.html', {
                     'error': 'El correo electrónico ya está en uso',
-                    'is_admin': authenticated_user.admin,
+                    'is_admin': is_admin,
                     'is_encargado': str(authenticated_user.empresa.encargado) == str(authenticated_user.username),
                     'user': authenticated_user,
                 })
@@ -1250,7 +1309,7 @@ def crear_usuario_admin (request):
             if not empresa_obj:
                 return render(request, 'admin/crear_usuario.html', {
                     'error': 'No existen empresas con este nombre',
-                    'is_admin': authenticated_user.admin,
+                    'is_admin': is_admin,
                     'is_encargado': str(authenticated_user.empresa.encargado) == str(authenticated_user.username),
                     'user': authenticated_user,
                 })
@@ -1263,7 +1322,7 @@ def crear_usuario_admin (request):
                 nombre=nombre,
                 empresa=empresa_obj,
                 correo=correo,
-                admin=admin_flag if authenticated_user.admin else False,
+                tipo_usuario=tipo_usuario,
             )
 
             user.save()
@@ -1273,9 +1332,76 @@ def crear_usuario_admin (request):
         except Exception as e:
             return render(request, 'admin/crear_usuario.html', {
                 'error': str(e),
-                'is_admin': authenticated_user.admin,
+                'is_admin': is_admin,
                 'is_encargado': str(authenticated_user.empresa.encargado) == str(authenticated_user.username),
                 'user': authenticated_user,
+            })
+
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
+def gestion_dispositivos (request):
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+
+
+    if authenticated_user.tipo_usuario != 'admin' and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+        return render (request, "error.html")
+    
+
+    if request.method == "GET":
+
+        dispositivos = Dispositivo.objects.all().order_by('id')
+
+        is_admin = False
+        is_encargado = False
+
+        return render (request, "admin/gestion_dispositivos.html", {
+            "is_admin": is_admin,
+            "is encargado": is_encargado,
+            "dispositivos": dispositivos,
+        })
+    
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
+def crear_dispositivo (request):
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+
+    if authenticated_user.tipo_usuario != 'admin' and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+        return render (request, "error.html")
+
+
+    if request.method == "GET":
+
+        return render (request, "admin/crear_dispositivo.html")
+    
+    if request.method == "POST":
+        nombre = request.POST.get("nombre")
+
+        try:
+            # Verificar si el dispositivo ya existe
+            if Dispositivo.objects.filter(nombre=nombre).exists():
+                return render(request, 'admin/crear_dispositivo.html', {
+                    'error': 'El nombre del dispositivo ya existe'
+                })
+
+            dispositivo = Dispositivo.objects.create(
+                nombre=nombre,
+            )
+
+            dispositivo.save()
+
+            return HttpResponseRedirect('/gestion_dispositivos/')
+        
+        except Exception as e:
+            return render(request, 'admin/crear_dispositivo.html', {
+                'error': str(e)
             })
 
     else:

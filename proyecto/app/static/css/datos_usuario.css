@@ -41,7 +41,7 @@ h1, h2, h3, h4 {
 .datos-usuario .nombre,
 .datos-usuario .empresa,
 .datos-usuario .correo,
-.datos-usuario .administrador,
+.datos-usuario .tipo_usuario,
 .datos-usuario .password,
 .datos-usuario .confirm_password {
     display: grid;

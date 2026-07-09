@@ -35,9 +35,11 @@
     <div class="tipo_dispositivo">
         <p>Tipo de dispositivo:</p>
         <select name="tipo_dispositivo" required>
-            <option value="maquina">Máquina</option>
-            <option value="tracker">Tracker</option>
-            <option value="otro">Otro</option>
+            <option value="">Selecciona un dispositivo</option>
+            {% for dispositivo in dispositivos %}
+            <option value="{{ dispositivo.id }}">{{ dispositivo.nombre }}</option>
+            {% endfor %}
+
         </select>
     </div>
 

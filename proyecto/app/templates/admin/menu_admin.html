@@ -1,0 +1,55 @@
+<!-- En esta páginaa el usuario podrá modificar sus datos de perfil, 
+ comprobar los tickets que ha subido con su perfil, y cerrar sesión
+ de usuario.
+-->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi cuenta{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/perfil.css' %}">
+{% endblock %}
+
+
+{% block content %}
+
+
+<h1>Administrador</h1>
+
+<div class="opciones">
+
+    {% if is_admin %}
+    <a href="/gestion_empresas/" class="todas_empresas">
+        <div class="contenido_a">
+            <p>Gestión de empresas</p>
+            <p>></p>
+        </div>
+    </a>
+
+    <a href="/gestion_usuarios/" class="todos_usuarios">
+        <div class="contenido_a">
+            <p>Gestión de usuarios</p>
+            <p>></p>
+        </div>
+    </a>
+
+    <a href="/gestion_tickets/" class="todos_tickets">
+        <div class="contenido_a">
+            <p>Gestión de tickets</p>
+            <p>></p>
+        </div>
+    </a>
+
+    <a href="#" class="todos_dispositivos">
+        <div class="contenido_a">
+            <p>Gestión de dispositivos</p>
+            <p>></p>
+        </div>
+    </a>
+
+    {% endif %}
+</div>
+
+
+{% endblock %}

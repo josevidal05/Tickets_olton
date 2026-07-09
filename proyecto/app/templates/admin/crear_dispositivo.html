@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Registrar dispositivo{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'css/crear_elementos.css' %}">
+{% endblock %}
+
+{% block content %}
+
+
+    <div class="titulo">
+        <h1>Registrar dispositivo</h1>
+        <h4>Introduzca los datos</h4>
+    </div>
+
+
+    <form method="POST" action="{% url 'crear_dispositivo' %}">
+        {% csrf_token %}
+
+        <div class="nombre">
+            <p>Nombre:*</p>
+            <input type="text" name="nombre" required>
+        </div>
+
+
+        <button type="submit" class="registrar-dispositivo">Registrar dispositivo</button>
+        <a href="/gestion_dispositivos/" class="volver">Volver</a>
+
+    </form>
+    
+    
+
+{% endblock %}

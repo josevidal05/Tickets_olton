@@ -30,7 +30,7 @@ urlpatterns = [
 
     #urls de tickets
     path('', views.crear_ticket),
-    path('tickets_usuario/', views.tickets_usuario),
+    path('mis_tickets/', views.tickets_usuario),
     path("ticket/<int:ticket_id>/", views.ticket_id),
     path("ticket/<int:ticket_id>/pdf/", views.ticket_pdf),
     
@@ -40,20 +40,25 @@ urlpatterns = [
     path("cambiar_contraseña/", views.contraseña, name='edit_password'),
 
     #urls para encargados de empresa
-    path("empresa/", views.empresa),
+    path('empresa/', views.empresa),
+    path("datos_empresa/", views.datos_empresa),
     path("tickets_empresa/", views.tickets_empresa),
     path('usuarios_empresa/', views.usuarios_empresa),
     
     # urls para admin
     path('admin/', admin.site.urls),
+    path('administrador/', views.administrador),
     path('gestion_tickets/', views.gestion_tickets),
     path('gestion_usuarios/', views.gestion_usuarios),
     path('crear_usuario/', views.crear_usuario_admin, name='registrar_usuario_admin'),
     path('usuario/<int:usuario_id>/', views.usuario_id),
     path('cambiar_contraseña/<int:usuario_id>/', views.contraseña_admin),
     path('gestion_empresas/', views.gestion_empresas),
-    path('empresa/<int:empresa_id>/', views.empresa_id),
+    path('datos_empresa/<int:empresa_id>/', views.empresa_id),
     path('crear_empresa/', views.crear_empresa, name='crear_empresa'),
+    path('gestion_dispositivos/', views.gestion_dispositivos),
+    path('crear_dispositivo/', views.crear_dispositivo, name='crear_dispositivo'),
+
 
 
     

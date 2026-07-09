@@ -38,15 +38,16 @@
     </div>
 
     <div class="administrador"> 
-        <p>Admin:</p>
-        <p class="admin-value">{{ user.admin }}</p>
-        <label class="admin-checkbox" style="display:none;">
-            <input type="checkbox" name="admin" class="admin-input" {{ user.admin|yesno:"checked," }}>
-            Es administrador
-        </label>
+        <p>Tipo de usuario:</p>
+        <p>{{ user.tipo_usuario }}</p>
+        <select name="tipo_usuario" required hidden>
+            <option value="cliente">Cliente</option>
+            <option value="taller">Taller</option>
+            <option value="admin">Administrador</option>
+        </select>
     </div>
 
-    <div class="password" >
+    <div class="password">
         <a href="/cambiar_contraseña/{{ user.id }}/" class="enlace_password">Cambiar contraseña</a>
     </div>
 

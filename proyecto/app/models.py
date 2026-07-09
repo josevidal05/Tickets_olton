@@ -33,24 +33,31 @@ class Usuario(models.Model):
     empresa = models.ForeignKey('Empresa', on_delete=models.CASCADE, related_name='usuarios')
     correo = models.EmailField(max_length=254, unique=True)
     token_sesion = models.CharField(max_length=150, null=True)
-    admin = models.BooleanField(default=False)
+
+    TIPO_USUARIO_CHOICES = [
+        ('cliente', 'Cliente'),
+        ('taller', 'Taller'),
+        ('admin', 'Admin'),
+    ]
+    
+    tipo_usuario = models.CharField(
+        max_length=20,
+        choices=TIPO_USUARIO_CHOICES,
+        default = 'cliente'
+    )
 
     def __str__(self):
         return self.username
 
+class Dispositivo (models.Model):
+    nombre = models.CharField(max_length=100)
 
-class Ticket(models.Model):
+    def __str__(self):
+        return self.nombre
+    
+class Ticket(models.Model): 
 
-    TIPO_DISPOSITIVO_CHOICES = [
-        ('maquina', 'Máquina'),
-        ('tracker', 'Tracker'),
-        ('otro', 'Otro'),
-    ]
-
-    tipo_dispositivo = models.CharField(
-        max_length=20,
-        choices=TIPO_DISPOSITIVO_CHOICES
-    )
+    tipo_dispositivo = models.ForeignKey('Dispositivo', on_delete=models.CASCADE, related_name='dispositivo_tickets')
     id_dispositivo = models.IntegerField()
     observaciones = models.TextField()
     archivo = models.FileField(
@@ -63,7 +70,7 @@ class Ticket(models.Model):
         ]
     )
 
-    TIPO_PORTES_CHOICES = [
+    TIPO_PORTES_CHOICES = [ 
         ('pagado', 'Pagado'),
         ('debido', 'Debido'),
     ]
@@ -87,8 +94,10 @@ class Ticket(models.Model):
         default='no leido'
     )
 
-    idUsuario = models.ForeignKey('Usuario', on_delete=models.CASCADE, related_name='tickets')
+    idUsuario = models.ForeignKey('Usuario', on_delete=models.CASCADE, related_name='usuario_tickets')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Ticket #{self.id} - {self.idUsuario.username}"
+    
+

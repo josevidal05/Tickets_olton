@@ -1,0 +1,49 @@
+<!-- En esta páginaa el usuario podrá modificar sus datos de perfil, 
+ comprobar los tickets que ha subido con su perfil, y cerrar sesión
+ de usuario.
+-->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Empresa{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/perfil.css' %}">
+{% endblock %}
+
+
+{% block content %}
+
+
+<h1>Empresa</h1>
+
+<div class="opciones">
+    {% if is_encargado %}
+    <a href="/datos_empresa/" class="mi_empresa">
+        <div class="contenido_a">
+            <p>Datos de empresa</p>
+            <p>></p>
+        </div>
+    </a>
+
+    <a href="/tickets_empresa/" class="tickets_empresa">
+        <div class="contenido_a">
+            <p>Tickets de empresa</p>
+            <p>></p>
+        </div>
+    </a>
+
+    <a href="/usuarios_empresa/" class="tickets_empresa">
+        <div class="contenido_a">
+            <p>Usuarios de
+                 empresa</p>
+            <p>></p>
+        </div>
+    </a>
+    {% endif %}
+
+
+</div>
+
+
+{% endblock %}

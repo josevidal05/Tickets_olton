@@ -66,8 +66,7 @@ html {
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
-.user_cabecera,
-.ticket_cabecera {
+svg {
     color: #ffffff;
     width: 24px;
     height: 24px;

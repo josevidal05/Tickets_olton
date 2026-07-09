@@ -37,6 +37,13 @@
         <input type="text" name="correo" value="{{ user.correo }}" required hidden>
     </div>
 
+    <div class="tipo_usuario">
+        <p>Tipo usuario:</p>
+        <p>{{ user.tipo_usuario}}</p>
+        <input type="text" name="tipo_usuario" value="{{ user.tipo_usuario }}" required hidden>
+    </div>
+
+
     <div class="password" >
         <a href="/cambiar_contraseña/" class="enlace_password">Cambiar contraseña</a>
     </div>

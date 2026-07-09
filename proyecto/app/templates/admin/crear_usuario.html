@@ -5,7 +5,7 @@
 {% block title %}Registro{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/crear_elementos.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -26,7 +26,7 @@
         </div>
 
         <div class="nombre">
-            <p>Nombre:*</p>
+            <p>Nombre:</p>
             <input type="text" name="nombre" required>
         </div>
 
@@ -34,7 +34,12 @@
             <p>Empresa:</p>
 
             {% if is_admin %}
-            <input type="text" name="empresa" required>
+            <select name="empresa" required>
+                <option value="">Seleccione una empresa</option>
+                {% for empresa in empresas %}
+                <option value="{{ empresa }}">{{ empresa.nombre }}</option>
+                {% endfor %}
+            </select>
 
             {% elif is_encargado %}
             <input type="text" value="{{ user.empresa }}" name="empresa" required>
@@ -48,11 +53,13 @@
         </div>
 
         {% if is_admin %}
-        <div class="administrador">
-            <label>
-                <input type="checkbox" name="admin">
-                Administrador
-            </label>
+        <div class="tipo_usuario">
+            <p>Tipo de usuario:</p>
+            <select name="tipo_usuario" required>
+                <option value="cliente">Cliente</option>
+                <option value="taller">Taller</option>
+                <option value="admin">Administrador</option>
+            </select>
         </div>
         {% endif %}
 

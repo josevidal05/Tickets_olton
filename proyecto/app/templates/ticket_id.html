@@ -4,7 +4,7 @@
 {% block title %}Ticket #{{ ticket.id }} {% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'css/ticket.css' %}">
+<link rel="stylesheet" href="{% static 'css/datos_ticket.css' %}">
 
 {% endblock %}
 
@@ -36,17 +36,15 @@
             <label>Contacto</label>
             <div class="form-value">{{ ticket.idUsuario.username }}</div>
         </div>
-        
+         
         <div class="form-group">
             <label>Tipo de dispositivo</label>
             <div class="form-field">
-                <span id="tipo_dispositivo-display">{{ ticket.get_tipo_dispositivo_display }}</span>
+                <span id="tipo_dispositivo-display">{{ ticket.tipo_dispositivo.nombre }}</span>
                 <select id="tipo_dispositivo-edit" name="tipo_dispositivo" style="display:none;">
-                    <option value="maquina" {% if ticket.tipo_dispositivo == 'maquina' %}selected{% endif %}>Máquina
-                    </option>
-                    <option value="tracker" {% if ticket.tipo_dispositivo == 'tracker' %}selected{% endif %}>Tracker
-                    </option>
-                    <option value="otro" {% if ticket.tipo_dispositivo == 'otro' %}selected{% endif %}>Otro</option>
+                    {% for dispositivo in dispositivos %}
+                    <option value="{{ dispositivo.id }}" {% if ticket.tipo_dispositivo_id == dispositivo.id %}selected{% endif %}>{{ dispositivo.nombre }}</option>
+                    {% endfor %}
                 </select>
             </div>
         </div>
@@ -139,7 +137,10 @@
         <button id="save-btn" style="display:none;">Guardar Cambios</button>
         <button id="cancel-btn" style="display:none;">Cancelar</button>
         <button id="imprimir-ticket">Imprimir Ticket</button>
+
         <button id="delete-btn">Eliminar Ticket</button>
+        <button id="volver-btn">Volver</button>
+
     </div>
 
 
@@ -167,7 +168,7 @@
             editBtn.style.display = isEditing ? 'none' : 'inline';
             saveBtn.style.display = isEditing ? 'inline' : 'none';
             cancelBtn.style.display = isEditing ? 'inline' : 'none';
-            deleteBtn.style.display = isEditing ? 'none' : 'inline';
+            // deleteBtn.style.display = isEditing ? 'none' : 'inline';
             imprimirBtn.style.display = isEditing ? 'none' : 'inline';
         };
 
@@ -201,9 +202,15 @@
             }
         };
 
+        const volverBtn = document.getElementById('volver-btn');
+
         editBtn.addEventListener('click', () => setEditMode(true));
 
         cancelBtn.addEventListener('click', () => setEditMode(false));
+
+        volverBtn.addEventListener('click', () => {
+            window.history.back();
+        });
 
         saveBtn.addEventListener('click', async () => {
             try {

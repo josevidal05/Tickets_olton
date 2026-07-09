@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Gestión dispositivos{% endblock %}
+
+{% block head %}
+
+<link rel="stylesheet" href="{% static 'css/gestores.css' %}">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="titulo">
+    <h1>Gestión de dispositivos</h1>
+    <button type="button" class="btn-inicio" onclick="window.location.href='/crear_dispositivo/';">Crear nuevo dispositivo</button>
+</div>
+
+
+<div class="tabla_tickets">
+    <table>
+        <tr class="cabecera_tabla">
+            <th>ID</th>
+            <th>Nombre</th>
+        </tr>
+
+        {% for dispositivo in dispositivos %}
+        <tr class="fila_tabla" onclick="window.location='/datos_dispositivo/{{ dispositivo.id }}/';" style="cursor:pointer;">
+            <td>{{ dispositivo.id }}</td>
+            <td>{{ dispositivo.nombre }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+{% endblock %}

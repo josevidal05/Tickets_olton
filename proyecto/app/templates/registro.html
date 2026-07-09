@@ -32,7 +32,12 @@
 
         <div class="empresa">
             <p>Empresa:</p>
-            <input type="text" name="empresa" required>
+            <select name="empresa" required>
+                <option value="">Seleccione una empresa</option>
+                {% for empresa in empresas %}
+                <option value="{{ empresa }}">{{ empresa.nombre }}</option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="correo"> 
