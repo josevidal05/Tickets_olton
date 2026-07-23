@@ -4,13 +4,13 @@
 {% block title %}Mis datos{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'css/datos_usuario.css' %}">
+<link rel="stylesheet" href="{% static 'css/datos.css' %}">
 {% endblock %}
 
 {% block content %}
 <h1>Mis datos</h1>
 
-<div class="datos-usuario">
+<div class="datos">
     {% csrf_token %}
 
     <div class="username">
@@ -40,7 +40,15 @@
     <div class="tipo_usuario">
         <p>Tipo usuario:</p>
         <p>{{ user.tipo_usuario}}</p>
-        <input type="text" name="tipo_usuario" value="{{ user.tipo_usuario }}" required hidden>
+        {% if user.tipo_usuario == 'admin' or user.tipo_usuario == 'Admin' %}
+        <select value="{{ user.tipo_usuario }}" name="tipo_usuario" required hidden>
+            <option value="cliente" {% if user.tipo_usuario == 'cliente' %}selected{% endif %}>Cliente</option>
+            <option value="taller" {% if user.tipo_usuario == 'taller' %}selected{% endif %}>Taller</option>
+            <option value="admin" {% if user.tipo_usuario == 'admin' or user.tipo_usuario == 'Admin' %}selected{% endif %}>Administrador</option>
+        </select>
+        {% else %}
+        <p class="tipoU" name="tipo_usuario" required hidden>{{ user.tipo_usuario}}</p>
+        {% endif %}
     </div>
 
 
@@ -54,7 +62,7 @@
 </div>
 
 <script>
-const datosUsuarioDiv = document.querySelector('.datos-usuario');
+const datosUsuarioDiv = document.querySelector('.datos');
 const editarLink = datosUsuarioDiv.querySelector('.editar');
 const volverLink = datosUsuarioDiv.querySelector('.volver');
 const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
@@ -63,7 +71,8 @@ const originalData = {
     username: getInputValue('input[name="username"]'),
     nombre: getInputValue('input[name="nombre"]'),
     empresa: getInputValue('input[name="empresa"]'),
-    correo: getInputValue('input[name="correo"]')
+    correo: getInputValue('input[name="correo"]'),
+    tipo_usuario: getSelectValue('select[name="tipo_usuario"]')
 };
 
 function getInputValue(selector) {
@@ -71,29 +80,53 @@ function getInputValue(selector) {
     return input ? input.value.trim() : '';
 }
 
+function getSelectValue(selector) {
+    const select = datosUsuarioDiv.querySelector(selector);
+    return select ? select.value.trim() : '';
+}
+
 function restoreOriginalValues() {
     const usernameInput = datosUsuarioDiv.querySelector('input[name="username"]');
     const nombreInput = datosUsuarioDiv.querySelector('input[name="nombre"]');
     const empresaInput = datosUsuarioDiv.querySelector('input[name="empresa"]');
     const correoInput = datosUsuarioDiv.querySelector('input[name="correo"]');
+    const tipo_usuarioSelect = datosUsuarioDiv.querySelector('select[name="tipo_usuario"]')
 
     if (usernameInput) usernameInput.value = originalData.username;
     if (nombreInput) nombreInput.value = originalData.nombre;
     if (empresaInput) empresaInput.value = originalData.empresa;
     if (correoInput) correoInput.value = originalData.correo;
+    if (tipo_usuarioSelect) tipo_usuarioSelect.value = originalData.tipo_usuario;
 }
 
 function setEditingMode(editing) {
-    const textFields = ['.username', '.nombre', '.empresa', '.correo'];
+    const textFields = ['.username', '.nombre', '.empresa', '.correo', '.tipo_usuario'];
     textFields.forEach(fieldClass => {
         const container = datosUsuarioDiv.querySelector(fieldClass);
         if (!container) return;
+
         const text = container.querySelector('p:nth-child(2)');
         const input = container.querySelector('input');
-        if (text) text.style.display = editing ? 'none' : 'block';
+        const select = container.querySelector('select');
+        const tipoTexto = container.querySelector('.tipoU');
+
+        if (text) {
+            text.style.display = editing ? 'none' : 'block';
+        }
+
         if (input) {
             input.hidden = !editing;
             input.style.display = editing ? 'block' : 'none';
+        }
+
+        if (select) {
+            select.hidden = !editing;
+            select.style.display = editing ? 'block' : 'none';
+        }
+
+        if (tipoTexto) {
+            tipoTexto.hidden = !editing;
+            tipoTexto.style.display = editing ? 'block' : 'none';
         }
     });
 
@@ -146,6 +179,7 @@ async function guardarCambios() {
     const correo = getInputValue('input[name="correo"]');
     const password = getInputValue('input[name="password"]');
     const confirmPassword = getInputValue('input[name="confirm_password"]');
+    const tipo_usuario = getSelectValue('select[name="tipo_usuario"]')
 
     if (password && password !== confirmPassword) {
         showError('Las contraseñas no coinciden.');
@@ -157,6 +191,7 @@ async function guardarCambios() {
         nombre,
         empresa,
         correo,
+        tipo_usuario,
         password
     };
 

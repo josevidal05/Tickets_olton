@@ -5,7 +5,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Mi cuenta{% endblock %}
+{% block title %}Taller{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
@@ -15,11 +15,10 @@
 {% block content %}
 
 
-<h1>Administrador</h1>
+<h1>Taller</h1>
 
 <div class="opciones">
-
-    {% if is_admin %}
+    {% if is_taller %}
     <a href="/gestion_empresas/" class="todas_empresas">
         <div class="contenido_a">
             <p>Gestión de empresas</p>
@@ -47,8 +46,9 @@
             <p>></p>
         </div>
     </a>
-
     {% endif %}
+
+
 </div>
 
 

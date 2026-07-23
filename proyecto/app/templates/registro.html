@@ -11,69 +11,114 @@
 {% block content %}
 
 
-    <div class="titulo">
-        <h1>Registro</h1>
-        <h4>Introduzca los datos</h4>
+<div class="titulo">
+    <h1>Registro</h1>
+    <h4>Introduzca los datos</h4>
+</div>
+
+
+<form id="register-form" method="POST" action="{% url 'registrar_usuario' %}">
+    {% csrf_token %}
+
+    <div class="username">
+        <p>Nombre de usuario:</p>
+        <input type="text" name="username" >
     </div>
 
+    <div class="nombre">
+        <p>Nombre:</p>
+        <input type="text" name="nombre" >
+    </div>
 
-    <form method="POST" action="{% url 'registrar_usuario' %}">
-        {% csrf_token %}
+    <div class="empresa">
+        <p>Empresa:</p>
+        <select name="empresa" >
+            <option value="hola">Seleccione una empresa</option>
+            {% for empresa in empresas %}
+            <option value="{{ empresa }}">{{ empresa.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
 
-        <div class="username">
-            <p>Nombre de usuario:</p>
-            <input type="text" name="username" required>
-        </div>
+    <div class="correo"> 
+        <p>Correo electrónico:</p>
+        <input type="email" name="correo" >
+    </div>
 
-        <div class="nombre">
-            <p>Nombre:</p>
-            <input type="text" name="nombre" required>
-        </div>
+    <div class="password">
+        <p>Contraseña:</p>
+        <input type="password" name="password" >
+    </div>
 
-        <div class="empresa">
-            <p>Empresa:</p>
-            <select name="empresa" required>
-                <option value="">Seleccione una empresa</option>
-                {% for empresa in empresas %}
-                <option value="{{ empresa }}">{{ empresa.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
+    <div class="confirm_password">
+        <p>Confirmar contraseña:</p>
+        <input type="password" name="confirm_password" >
 
-        <div class="correo"> 
-            <p>Correo electrónico:</p>
-            <input type="email" name="correo" required>
-        </div>
+    </div>
 
-        <div class="password">
-            <p>Contraseña:</p>
-            <input type="password" name="password" required>
-        </div>
+    <button id="register-button" type="submit">Registrarse</button>
 
-        <div class="confirm_password">
-            <p>Confirmar contraseña:</p>
-            <input type="password" name="confirm_password" required>
+</form>
 
-        </div>
-
-        <button type="submit">Registrarse</button>
-
-    </form>
-
-    <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión</a> </p>
+<p>¿Ya tienes cuenta? <a href="/login">Inicia sesión</a> </p>
 
     
     
-    {% if error %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var msg = "{{ error|escapejs }}";
-                if (msg) {
-                    // Mostrar alerta sin interferir con el renderizado de la página
-                    alert(msg);
-                }
+<script>
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     var msg = "{{ error|escapejs }}";
+    //     if (msg) {
+    //         // Mostrar alerta sin interferir con el renderizado de la página
+    //         alert(msg);
+    //     }
+    // });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const registerForm = document.getElementById('register-form');
+    const registerButton = document.getElementById('register-button');
+ 
+    function showError(message) {
+        alert(message);
+    }
+ 
+    registerForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+ 
+        const formData = new FormData(registerForm);
+ 
+        registerButton.disabled = true;
+        registerButton.textContent = 'Registrando usuario...';
+ 
+        try {
+            const response  = await fetch(registerForm.action, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
             });
-        </script>
-    {% endif %}
+ 
+            const data = await response.json();
+ 
+            if (!response.ok) {
+                showError(
+                    data.error ||
+                    data.message ||
+                    'No se pudo iniciar sesión.'
+                );
+                return;
+            }
+ 
+            window.location.href = data.redirect_url;
+ 
+        } catch (error) {
+            console.error('Error al registrar usuario:', error);
+            showError('Error al registrar usuario.');
+        } finally {
+            registerButton.disabled = false;
+            registerButton.textContent = 'Registrar';
+        }
+    });
+});
+
+</script>
 
 {% endblock %}

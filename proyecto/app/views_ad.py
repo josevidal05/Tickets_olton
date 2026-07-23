@@ -1,8 +1,10 @@
 import secrets
 import bcrypt
+from datetime import timedelta
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 import json
 from .models import Ticket, Usuario, Empresa
 
@@ -12,9 +14,13 @@ def __get_request_user_ad(request):
     if not token:
         return None
     try:
-        return Usuario.objects.get(token_sesion=token)
+        user = Usuario.objects.get(token_sesion=token)
+        if user.is_session_token_valid():
+            return user
+        user.clear_session_token()
     except Usuario.DoesNotExist:
-        return None
+        pass
+    return None
 
 
 @csrf_exempt
@@ -159,6 +165,7 @@ def registrar_usuario_ad(request):
 
     hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
     random_token = secrets.token_hex(16)
+    token_expiracion = timezone.now() + timedelta(hours=24)
 
     user_object = Usuario.objects.create(
         username=username,
@@ -167,6 +174,7 @@ def registrar_usuario_ad(request):
         empresa=empresa_obj,
         correo=correo,
         token_sesion=random_token,
+        token_sesion_expiracion=token_expiracion,
     )
     user_object.save()
 
@@ -193,8 +201,10 @@ def iniciar_sesion_ad(request):
         user = Usuario.objects.get(username=username)
         if bcrypt.checkpw(password.encode('utf8'), user.password.encode('utf8')):
             token = secrets.token_hex(16)
+            token_expiracion = timezone.now() + timedelta(hours=24)
             user.token_sesion = token
-            user.save()
+            user.token_sesion_expiracion = token_expiracion
+            user.save(update_fields=['token_sesion', 'token_sesion_expiracion'])
             return JsonResponse({"success": True, "token": token}, status=200)
     except Usuario.DoesNotExist:
         pass
@@ -212,7 +222,8 @@ def logout_ad(request):
         return JsonResponse({"error": "Token inválido"}, status=401)
 
     authenticated_user.token_sesion = ""
-    authenticated_user.save()
+    authenticated_user.token_sesion_expiracion = None
+    authenticated_user.save(update_fields=['token_sesion', 'token_sesion_expiracion'])
     return JsonResponse({"success": True}, status=200)
 
 

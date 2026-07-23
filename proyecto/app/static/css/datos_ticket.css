@@ -89,6 +89,10 @@ button {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+#edit-btn{
+    margin-top: 20px;
+}
+
 #volver-btn{
     background: #f3f6ff;
     color: #243a6a;
@@ -112,6 +116,8 @@ hr {
     background: #e6ebf5;
     margin: 0;
 }
+
+
 
 @media (max-width: 640px) {
     .container {

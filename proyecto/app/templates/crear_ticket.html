@@ -6,8 +6,6 @@
 {% block head %}
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 
-
-
 {% endblock %}
 
 {% block content %}
@@ -17,8 +15,6 @@
     <h4>Rellene el formulario</h4>
 
 </div>
-
-
 
 <form method="POST" action="/">
 
@@ -34,7 +30,7 @@
 
     <div class="tipo_dispositivo">
         <p>Tipo de dispositivo:</p>
-        <select name="tipo_dispositivo" required>
+        <select name="tipo_dispositivo" >
             <option value="">Selecciona un dispositivo</option>
             {% for dispositivo in dispositivos %}
             <option value="{{ dispositivo.id }}">{{ dispositivo.nombre }}</option>
@@ -45,12 +41,12 @@
 
     <div class="id_dispositivo">
         <p>ID dispositivo:</p>
-        <input type="number" name="id_dispositivo" required>
+        <input type="number" name="id_dispositivo" >
     </div>
 
     <div class="observaciones">
         <p>Observaciones:</p>
-        <textarea name="observaciones" rows="4" required></textarea>
+        <textarea name="observaciones" rows="4" ></textarea>
         <!-- Subir archivo -->
         <input type="file" class="subir_archivo" name="archivo" accept="image/*">
 
@@ -58,7 +54,8 @@
 
     <div class="portes">
         <p>Portes:</p>
-        <select name="portes" required>
+        <select name="portes" >
+            <option value="">Selecciona un tipo de portes</option>
             <option value="debido">Debido</option>
             <option value="pagado">Pagado</option>
         </select>
@@ -66,60 +63,77 @@
 
     <div class="transporte">
         <p>Empresa de transporte:</p>
-        <input type="text" name="transporte" required>
+        <input type="text" name="transporte" >
     </div>
 
-    <button type="submit">Enviar Ticket</button>
+    <button id="enviar-ticket" type="submit">Enviar Ticket</button>
 </form>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const form = document.querySelector('form');
-        const fileInput = form.querySelector('input[name="archivo"]');
-        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form');
+    const fileInput = form.querySelector('input[name="archivo"]');
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    const enviarButton = document.getElementById('enviar-ticket')
 
-        const validFile = file => {
-            if (!file) return true;
-            const extension = file.name.split('.').pop().toLowerCase();
-            return allowedExtensions.includes(extension);
-        };
+    const validFile = file => {
+        if (!file) return true;
+        const extension = file.name.split('.').pop().toLowerCase();
+        return allowedExtensions.includes(extension);
+    };
 
-        const showError = message => {
-            window.alert(message);
-            console.error(message);
-        };
+    const showError = message => {
+        window.alert(message);
+        console.error(message);
+    };
+    
 
-        const handleSubmit = async event => {
-            event.preventDefault();
-            const file = fileInput.files[0];
+    form.addEventListener('submit', async function (event) {
+        event.preventDefault();
 
-            if (!validFile(file)) {
-                showError('Formato de archivo inválido. Usa jpg, png, gif, bmp o webp.');
+        const formData = new FormData(form);
+        const file = fileInput.files[0];
+
+        if (!validFile(file)) {
+            showError('Formato de archivo inválido. Usa jpg, png, gif, bmp o webp.');
+            return;
+        }
+
+        enviarButton.disabled = true;
+        enviarButton.textContent = 'Creando ticket...';
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showError(
+                    data.error ||
+                    data.message ||
+                    'No se pudo crear el ticket.'
+                );
                 return;
             }
 
-            try {
-                const response = await fetch('/', {
-                    method: 'POST',
-                    body: new FormData(form)
-                });
+            window.alert(data.message);
+            window.location.href = "/";
 
-                if (!response.ok) {
-                    console.log(response)
-                    // throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
 
-                const data = await response.json();
-                console.log('Success:', data);
-                window.alert('Ticket creado correctamente.');
-                form.reset();
-            } catch (error) {
-                showError('Error al crear ticket: ' + error.message);
-            }
-        };
-
-        form.addEventListener('submit', handleSubmit);
+        } catch (error) {
+            console.error('Error al crear el ticket:', error);
+            showError('Error al crear el ticket.');
+        } finally {
+            enviarButton.disabled = false;
+            enviarButton.textContent = 'Crear ticket';
+        }
     });
+
+});
 </script>
 
 {% endblock %}

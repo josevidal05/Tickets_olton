@@ -1,53 +1,85 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Iniciar sesión{% endblock %}
 
-    {% block title %}Iniciar sesión{% endblock %}
-
-    {% block head %}
-    <link rel="stylesheet" href="{% static 'css/login.css' %}">
-    {% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
 
 {% block content %}
 
+<div class="titulo">
+    <h1>Inicia sesión</h1>
+    <h4>Introduzca los datos</h4>
+</div>
 
-    <div class="titulo">
-        <h1>Inicia sesión</h1>
-        <h4>Introduzca los datos</h4>
+<form id="login-form" method="POST" action="{% url 'iniciar_sesion' %}">
+    {% csrf_token %}
+
+    <div class="username">
+        <p>Nombre de usuario:</p>
+        <input type="text" name="username" autocomplete="username" required>
     </div>
 
-    <form method="POST" action="{% url 'iniciar_sesion' %}">
-        {% csrf_token %}
+    <div class="password">
+        <p>Contraseña:</p>
+        <input type="password" name="password" autocomplete="current-password" required>
+    </div>
 
+    <button id="login-button" type="submit">
+        Iniciar sesión
+    </button>
+</form>
 
+<p>¿No tienes cuenta? <a href="/registro/">Regístrate</a></p>
 
-        <div class="username">
-            <p>Nombre de usuario:</p>
-            <input type="text" name="username" required>
-        </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const loginForm = document.getElementById('login-form');
+        const loginButton = document.getElementById('login-button');
 
-        <div class="password">
-            <p>Contraseña:</p>
-            <input type="password" name="password" required>
-        </div>
- 
-        <button type="submit">Iniciar sesión</button>
+        function showError(message) {
+            alert(message);
+        }
 
-    </form>
+        loginForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
 
-    <p>¿No tienes cuenta? <a href="/registro/">Regístrate</a> </p>
+            const formData = new FormData(loginForm);
 
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var msg = "{{ error|escapejs }}";
-                if (msg) {
-                    // Mostrar alerta sin interferir con el renderizado de la página
-                    alert(msg);
+            loginButton.disabled = true;
+            loginButton.textContent = 'Iniciando sesión...';
+
+            try {
+                const response = await fetch(loginForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showError(
+                        data.error ||
+                        data.message ||
+                        'No se pudo iniciar sesión.'
+                    );
+                    return;
                 }
-            });
-        </script>
 
+                window.location.href = data.redirect_url;
 
-
+            } catch (error) {
+                console.error('Error al iniciar sesión:', error);
+                showError('Error al iniciar sesión.');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Iniciar sesión';
+            }
+        });
+    });
+</script>
 
 {% endblock %}

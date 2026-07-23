@@ -15,7 +15,7 @@
 
 <div class="titulo">
     <h1>Usuarios de empresa</h1>
-    <button type="button" class="btn-inicio" onclick="window.location.href='/';">Crear nuevo usuario</button>
+    <button type="button" class="btn-inicio" onclick="window.location.href='/crear_usuario/';">Crear nuevo usuario</button>
 
 </div>
 
@@ -80,12 +80,28 @@
             <td>{{ usuario.username }}</td>
             <td>{{ usuario.empresa }}</td>
             <td>{{ usuario.correo }}</td>
-
-
         </tr>
         {% endfor %}
     </table>
 </div>
+
+<div class="botones">
+    <button id="volver">Volver</button>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const volverBtn = document.getElementById('volver');
+
+        volverBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+
+    })
+
+</script>
 
 
 {% endblock %}

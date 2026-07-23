@@ -4,14 +4,14 @@
 {% block title %}Cambiar contraseña{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'css/datos_usuario.css' %}">
+<link rel="stylesheet" href="{% static 'css/datos.css' %}">
 <!-- No modal: use browser confirm() -->
 {% endblock %}
 
 {% block content %}
 <h1>Cambiar contraseña</h1>
 
-<div class="datos-usuario">
+<div class="datos">
     {% csrf_token %}
 
     <div class="contrasena_actual">

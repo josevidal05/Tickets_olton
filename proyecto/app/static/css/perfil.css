@@ -53,6 +53,10 @@ h1 {
     font-size: 1.1rem;
 }
 
+.todos_dispositivos{
+    margin-bottom: 20px;
+}
+
 hr {
     border: none;
     height: 1px;

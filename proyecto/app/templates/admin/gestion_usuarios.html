@@ -83,11 +83,29 @@
             <td>{{ usuario.correo }}</td>
             <td>{{ usuario.tipo_usuario }}</td>
 
-
         </tr>
         {% endfor %}
     </table>
 </div>
+
+<div class="botones">
+    <button id="volver">Volver</button>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const volverBtn = document.getElementById('volver');
+
+        volverBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+
+    })
+
+</script>
+
 
 
 {% endblock %}

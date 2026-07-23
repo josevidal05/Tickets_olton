@@ -76,14 +76,40 @@
         <tr class="fila_tabla" onclick="window.location='/datos_empresa/{{ empresa.id }}/';" style="cursor:pointer;">
             <td>{{ empresa.id }}</td>
             <td>{{ empresa.nombre }}</td>
+            {% if empresa.encargado != None %}
             <td>{{ empresa.encargado }}</td>
+            {% else %}
+            <td>-</td>
+            {% endif %}
             <td>{{ empresa.numero_tickets }}</td>
+            {% if empresa.correo != None %} 
             <td>{{ empresa.correo }}</td>
+            {% else %}
+            <td>-</td>
+            {% endif %}
 
         </tr>
         {% endfor %}
     </table>
 </div>
+
+<div class="botones">
+    <button id="volver">Volver</button>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const volverBtn = document.getElementById('volver');
+
+        volverBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+
+    })
+
+</script>
 
 
 {% endblock %}

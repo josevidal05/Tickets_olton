@@ -1,11 +1,12 @@
 import secrets
 from urllib import request
 import bcrypt
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
+from django.utils import timezone
 import json
 from .models import Ticket, Usuario, Empresa, Dispositivo
 
@@ -15,7 +16,10 @@ def __get_request_user(request):
     header_token = request.headers.get('Session', None)
     if header_token is not None:
         try:
-            return Usuario.objects.get(token_sesion=header_token)
+            user = Usuario.objects.get(token_sesion=header_token)
+            if user.is_session_token_valid():
+                return user
+            user.clear_session_token()
         except Usuario.DoesNotExist:
             pass
     
@@ -23,55 +27,56 @@ def __get_request_user(request):
     session_token = request.session.get('session_token', None)
     if session_token is not None:
         try:
-            return Usuario.objects.get(token_sesion=session_token)
+            user = Usuario.objects.get(token_sesion=session_token)
+            if user.is_session_token_valid():
+                return user
+            user.clear_session_token()
         except Usuario.DoesNotExist:
             pass
+        request.session.pop('session_token', None)
     
     return None
 
 # Registrar usuario
 def registar_usuario(request):
+  
+    empresas = Empresa.objects.all()
+
     if request.method == "GET":
-        empresas = Empresa.objects.all()
         return render(request, 'registro.html',{
             "empresas": empresas
         })
 
     if request.method == "POST":
         username = request.POST.get("username")
-        password = request.POST.get("password")
-        confirm_password = request.POST.get("confirm_password")
         nombre = request.POST.get("nombre")
         empresa_nombre = request.POST.get("empresa")
         correo = request.POST.get("correo")
+        password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if username == "" or nombre == "" or empresa_nombre == "" or correo == "" or password == "" or confirm_password == "":
+            return JsonResponse({"error": "Error al registrar usuario, hay campos vacíos"}, status = 400)
 
         if password != confirm_password:
-            return render(request, 'registro.html', {
-                'error': 'Las contraseñas no coinciden'
-            })
+            return JsonResponse({"error": "Las contraseñas no coinciden"}, status=400)
 
         try:
             # Verificar si el usuario ya existe
             if Usuario.objects.filter(username=username).exists():
-                return render(request, 'registro.html', {
-                    'error': 'El nombre de usuario ya existe'
-                })
+                return JsonResponse({"error": "El nombre de usuario ya está en uso"}, status=400)
 
             if Usuario.objects.filter(correo=correo).exists():
-                return render(request, 'registro.html', {
-                    'error': 'El correo electrónico ya está en uso'
-                })
+                return JsonResponse({"error": "El correo electrónico ya está en uso"}, status=400)
             
-
             # Verificar si la empresa existe (ignorar mayúsculas/minúsculas)
             empresa_obj = Empresa.objects.filter(nombre__iexact=empresa_nombre).first()
             if not empresa_obj:
-                return render(request, 'registro.html', {
-                    'error': 'No existen empresas con este nombre'
-                })
+                return JsonResponse({"error": "No existen empresas con este nombre"}, status=400)
 
             hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
             random_token = secrets.token_hex(16)
+            token_expiracion = timezone.now() + timedelta(hours=24)
 
             user = Usuario.objects.create(
                 username=username,
@@ -80,16 +85,21 @@ def registar_usuario(request):
                 empresa=empresa_obj,
                 correo=correo,
                 token_sesion=random_token,
+                token_sesion_expiracion=token_expiracion,
             )
 
             user.save()
 
             request.session['session_token'] = random_token
 
-            return HttpResponseRedirect('/mis_tickets/')
+            return JsonResponse({
+                "success": True,
+                "redirect_url": "/perfil/"
+            })    
         except Exception as e:
             return render(request, 'registro.html', {
-                'error': str(e)
+                'error': str(e),
+                'empresas': empresas,
             })
 
     else:
@@ -99,40 +109,57 @@ def registar_usuario(request):
 # Iniciar sesión
 def iniciar_sesion(request):
     if request.method == "GET":
-        return render(request, 'login.html')
-
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-
-        try:
-            user = Usuario.objects.get(username=username)
-            # Verificar contraseña con bcrypt
-            if bcrypt.checkpw(password.encode('utf8'), user.password.encode('utf8')):
-                # Crear un nuevo token de sesión
-                new_token = secrets.token_hex(16)
-                user.token_sesion = new_token
-                user.save()
-                
-                # Guardar el token en la sesión de Django
-                request.session['session_token'] = new_token
-                
-                return HttpResponseRedirect('/mis_tickets/')
-            
-            else:
-                return render(request, 'login.html', {
-                    'error': 'Usuario o contraseña incorrectos'
-                })
-            
-        except Usuario.DoesNotExist:
-            return render(request, 'login.html', {
-                'error': 'Usuario o contraseña incorrectos'
-            })
-
+        return render(request, "login.html")
+ 
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+ 
+    username = request.POST.get("username", "").strip()
+    password = request.POST.get("password", "")
+ 
+    if not username or not password:
+        return JsonResponse({"error": "Debes introducir el nombre de usuario y la contraseña."}, status=400)
+ 
+    try:
+        user = Usuario.objects.get(username=username)
+    except Usuario.DoesNotExist:
+        return JsonResponse({"error": "El usuario no existe"}, status=401)
+ 
+    try:
+        password_correcta = bcrypt.checkpw(
+            password.encode("utf-8"),
+            user.password.encode("utf-8")
+        )
+ 
+    except (ValueError, AttributeError):
+        return JsonResponse(
+            {"error": "No se pudo comprobar la contraseña."},
+            status=500
+        )
+ 
+    if not password_correcta:
+        return JsonResponse(
+            {"error": "Usuario o contraseña incorrectos"},
+            status=401
+        )
+ 
+    if user.token_sesion and user.token_sesion_expiracion and user.is_session_token_valid():
+        token = user.token_sesion
     else:
-        return render(request, 'login.html', {
-            'error': 'Método no permitido'
-        }, status=405)
+        token = secrets.token_hex(16)
+    token_expiracion = timezone.now() + timedelta(hours=24)
+
+    user.token_sesion = token
+    user.token_sesion_expiracion = token_expiracion
+    user.save(update_fields=["token_sesion", "token_sesion_expiracion"])
+ 
+    # Guardar el token en la sesión de Django
+    request.session["session_token"] = token
+ 
+    return JsonResponse({
+        "success": True,
+        "redirect_url": "/perfil/"
+    })    
 
 
 # Cerrar sesión
@@ -143,7 +170,8 @@ def logout(request):
         if authenticated_user is not None:
             # Eliminar el token de sesión
             authenticated_user.token_sesion = ""
-            authenticated_user.save()
+            authenticated_user.token_sesion_expiracion = None
+            authenticated_user.save(update_fields=["token_sesion", "token_sesion_expiracion"])
         
         # Limpiar la sesión de Django
         request.session.flush()
@@ -160,6 +188,7 @@ def crear_ticket(request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
+    
     if request.method == "GET":
 
         dispositivos = Dispositivo.objects.all()
@@ -174,24 +203,19 @@ def crear_ticket(request):
         try:
             # Obtener campos y validar presencia
             tipo_disp = request.POST.get("tipo_dispositivo")
-            id_disp_raw = request.POST.get("id_dispositivo")
+            id_disp = request.POST.get("id_dispositivo")
             observaciones = request.POST.get("observaciones")
             portes = request.POST.get("portes")
             transporte = request.POST.get("transporte")
             
-            if request.POST.get("portes") != "debido" and request.POST.get("portes") != "pagado":
-                print(request.POST)
-                return JsonResponse({"error": "Portes no válidos"}, status=400)
-
-
-            if not all([tipo_disp, id_disp_raw, observaciones, portes, transporte]):
+            if not all([tipo_disp, id_disp, observaciones, portes, transporte]):
                 return JsonResponse({"error": "Faltan campos obligatorios"}, status=400)
 
             # Validar que sea número y convertir a int
-            if not id_disp_raw.isdigit():
+            if not id_disp.isdigit():
                 return JsonResponse({"error": "El ID del dispositivo debe ser un número"}, status=400)
 
-            id_dispositivo = int(id_disp_raw)
+            id_dispositivo = int(id_disp)
             if id_dispositivo < 1:
                 return JsonResponse({"error": "El ID del dispositivo debe ser mayor que 0"}, status=400)
             
@@ -199,6 +223,9 @@ def crear_ticket(request):
                 tipo_dispositivo = Dispositivo.objects.filter(id=tipo_disp).first()
             except Dispositivo.DoesNotExist:
                 return JsonResponse({"error": "El tipo de dispositivo no existe"}, status=400)
+
+            if portes != "debido" and portes != "pagado":
+                return JsonResponse({"error": "Portes no válidos"}, status=400)
 
             ticket = Ticket.objects.create(
                 idUsuario=authenticated_user,
@@ -208,7 +235,7 @@ def crear_ticket(request):
                 portes=portes,
                 empresa_transporte=transporte,
                 archivo=request.FILES.get("archivo"),
-                estado="no leido"
+                estado="no leido",
             )
 
             # Incrementar el contador de la empresa del usuario
@@ -221,7 +248,7 @@ def crear_ticket(request):
                     pass
 
             return JsonResponse({
-                "estado": "Ticket creado correctamente con ID: " + str(ticket.id),
+                "message": "Ticket creado correctamente con ID: " + str(ticket.id),
                 "id": ticket.id
             }, status=201)
  
@@ -292,8 +319,51 @@ def ticket_id(request, ticket_id):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
+    
+    try:
+        ticket = Ticket.objects.get(id=ticket_id)
+    except Ticket.DoesNotExist:
+        return render(request, 'ticket_id.html', {'error': 'El ticket no existe'})
+
+    is_encargado = False
+    is_admin = False
+    is_taller = False
+    is_propietario = False
+
+    print("encargado empresa ticket   =   ", str(ticket.idUsuario.empresa.encargado))
+    print("username registrado   =   ", str(authenticated_user.username))
+    print("encargado empresa registrado   =   ", str(authenticated_user.empresa.encargado))
+
+    # compruebo que el usuario autenticado es el encargado de SU empresa
+    if str(authenticated_user.empresa.encargado) == str(authenticated_user.username):
+        print("El usuario es encargado de su empresa", authenticated_user.empresa)
+        
+        if str(ticket.idUsuario.empresa.encargado) == str(authenticated_user.username):
+            is_encargado = True
+    
+    if authenticated_user.tipo_usuario == "admin":
+        is_admin = True
+
+    if authenticated_user.tipo_usuario == "taller":
+        is_taller = True
+    
+
+    if ticket.idUsuario == authenticated_user:
+        is_propietario = True
+
+    if ticket.idUsuario != authenticated_user and is_admin == False and is_encargado == False and is_taller == False:
+        return render(request, 'error.html', {'error': 'No tienes permiso para ver este ticket'})
+    
+
+    print("------------------------------------------")
+    print("encargado final   =    ", is_encargado)
+    print("taller   =    ", is_taller)
+    print("admin   =    ", is_admin)
+    print("propietario   =   ", is_propietario)
 
     if request.method== "GET":
+        print("------------ MÉTODO GET ------------------")
+
         try:
             ticket = Ticket.objects.get(id=ticket_id)
         except Ticket.DoesNotExist:
@@ -301,20 +371,13 @@ def ticket_id(request, ticket_id):
         
         dispositivos = Dispositivo.objects.all()
 
-        is_encargado = str(authenticated_user.empresa.encargado) == str(authenticated_user.username)
-        is_admin = False
-        
-        if authenticated_user.tipo_usuario == "admin":
-            is_admin = True
-
-        if ticket.idUsuario != authenticated_user and is_admin == False and is_encargado == False:
-            return render(request, 'error.html', {'error': 'No tienes permiso para ver este ticket'})
-
-        
         return render(request, 'ticket_id.html', {
             'ticket': ticket,
             'dispositivos': dispositivos,
-            "is_admin": is_admin,
+            'is_admin': is_admin,
+            'is_taller': is_taller,
+            "is_propietario": is_propietario,
+            "is_encargado": is_encargado
         })
 
 
@@ -344,6 +407,8 @@ def ticket_id(request, ticket_id):
 
     elif request.method == 'PUT':
 
+        print("------------ MÉTODO PUT ------------------")
+
         try:
             ticket = Ticket.objects.get(id=ticket_id)
         except Ticket.DoesNotExist:
@@ -354,16 +419,53 @@ def ticket_id(request, ticket_id):
         except ValueError:
             return JsonResponse({"error": "JSON inválido"}, status=400)
 
-        ticket.tipo_dispositivo = data.get("tipo_dispositivo", ticket.tipo_dispositivo)
-        ticket.id_dispositivo = data.get("id_dispositivo", ticket.id_dispositivo)
-        ticket.observaciones = data.get("observaciones", ticket.observaciones)
-        ticket.portes = data.get("portes", ticket.portes)
-        ticket.empresa_transporte = data.get("empresa_transporte", ticket.empresa_transporte)
-        
-        if authenticated_user.tipo_usuario == "admin":
-            ticket.estado = data.get("estado", ticket.estado) 
-        
-        
+        tipo_dispositivo = data.get("tipo_dispositivo")
+        id_dispositivo = data.get("id_dispositivo")
+        observaciones = data.get("observaciones")
+        portes = data.get("portes")
+        empresa_transporte = data.get("empresa_transporte")
+        estado = data.get("estado") 
+
+        print("hola")
+
+        if is_propietario == True or is_encargado == True or is_admin == True:
+            # comprueba que el tipo de dispositivo exista en la clase Dispositivos
+            try:
+                tipo_dispositivo_obj = Dispositivo.objects.get(id = tipo_dispositivo)
+            except Dispositivo.DoesNotExist:
+                return JsonResponse({"error": "El dispositivo no existe"}, status = 400)
+            
+            ticket.tipo_dispositivo = tipo_dispositivo_obj
+            
+
+            # comprueba que el ID de dispositivo sea un número positivo
+            if int(id_dispositivo) <= 0:
+                return JsonResponse({"error": "ID de dispositivo inválido"}, status = 400)
+            
+            ticket.id_dispositivo = id_dispositivo
+
+            # comprueba que las observaciones no estén vacías
+            if observaciones == "":
+                return JsonResponse({"error": "Las observaciones no pueden estar vacías"}, status = 400)
+            ticket.observaciones = observaciones
+
+            # comprueba que los portes sean o debidos o pagados
+            if portes != "debido" and portes != "pagado":
+                return JsonResponse({"error": "Portes inválidos"}, status = 400)
+            ticket.portes = portes
+
+            # comprueba que la empresa de transporte no esté vacía
+            if empresa_transporte == "":
+                return JsonResponse({"error": "La empresa de transporte está vacía"}, status = 400)
+            ticket.empresa_transporte = empresa_transporte
+
+        if is_taller or is_admin:
+
+            if estado == "no leido" or estado == "leido" or estado == "cerrado" or estado == "abierto":
+                ticket.estado = estado
+            else: 
+                return JsonResponse ({"error": "El estado del ticket no es válido"}, status = 400)
+             
         ticket.save()
         
         return JsonResponse({"success": True}, status=200)
@@ -378,8 +480,6 @@ def ticket_pdf(request, ticket_id):
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
     from io import BytesIO
     from django.http import HttpResponse
-    import zipfile
-    import os
     
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
@@ -387,7 +487,7 @@ def ticket_pdf(request, ticket_id):
     
     try:
         ticket = Ticket.objects.get(id=ticket_id)
-        if ticket.idUsuario != authenticated_user and authenticated_user.tipo_usuario != "admin":
+        if ticket.idUsuario != authenticated_user and not authenticated_user.admin:
             return JsonResponse({"error": "No tienes permiso para descargar este ticket"}, status=403)
     except Ticket.DoesNotExist:
         return JsonResponse({"error": "Ticket no encontrado"}, status=404)
@@ -396,8 +496,8 @@ def ticket_pdf(request, ticket_id):
     
     try:
         # Crear buffer para PDF
-        pdf_buffer = BytesIO()
-        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, topMargin=20, bottomMargin=20)
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=20, bottomMargin=20)
         story = []
         styles = getSampleStyleSheet()
         
@@ -466,44 +566,25 @@ def ticket_pdf(request, ticket_id):
         
         # Construir PDF
         doc.build(story)
-        pdf_buffer.seek(0)
         
-        # Crear ZIP con el PDF y el archivo adjunto si existe
-        zip_buffer = BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            # Agregar PDF al ZIP
-            zip_file.writestr(f'ticket_{ticket.id}.pdf', pdf_buffer.getvalue())
-            
-            # Agregar archivo adjunto si existe
-            if ticket.archivo and ticket.archivo.name:
-                try:
-                    archivo_path = ticket.archivo.path
-                    if os.path.exists(archivo_path):
-                        archivo_nombre = os.path.basename(archivo_path)
-                        with open(archivo_path, 'rb') as f:
-                            zip_file.writestr(f'archivo_{archivo_nombre}', f.read())
-                except Exception as e:
-                    print(f"Error al agregar archivo al ZIP: {str(e)}")
-        
-        # Preparar respuesta del ZIP
-        zip_buffer.seek(0)
-        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="ticket_{ticket.id}.zip"'
+        # Preparar respuesta
+        buffer.seek(0)
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="ticket_{ticket.id}.pdf"'
         return response
         
     except Exception as e:
         import traceback
         print(f"Error en ticket_pdf: {str(e)}")
         print(traceback.format_exc())
-        return JsonResponse({"error": f"Error al generar descarga: {str(e)}"}, status=500)
-
-
+        return JsonResponse({"error": f"Error al generar PDF: {str(e)}"}, status=500)
 
 def perfil(request):
     authenticated_user = __get_request_user(request)
     
     if authenticated_user is None:
-        return JsonResponse({"error": "El token de sesión no es válido o no se ha enviado"}, status=401)
+        return render (request, "login.html")
+        
 
     if request.method == "GET":
         # Verificar si el usuario está autenticado
@@ -558,12 +639,7 @@ def perfil(request):
         nombre = data.get("nombre")
         empresa_nombre = data.get("empresa")
         correo = data.get("correo")
-        password_actual = data.get("contrasena_actual")
-        password = data.get("contrasena_nueva")
-        confirm_password = data.get("contrasena_nueva_confirmar")
-
-        if password_actual and not bcrypt.checkpw(password_actual.encode('utf8'), authenticated_user.password.encode('utf8')):
-            return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
+        tipo_usuario = data.get("tipo_usuario")
 
         if username == "" or correo == "" or nombre == "" or empresa_nombre == "":
             return JsonResponse({"error": "No se han proporcionado campos para actualizar"}, status=400)
@@ -590,11 +666,11 @@ def perfil(request):
             )
             authenticated_user.empresa = empresa_obj
 
-        if password and password.strip() != "":
-            if password != confirm_password:
-                return JsonResponse({"error": "Las contraseñas no coinciden"}, status=400)
-            hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
-            authenticated_user.password = hashed_password
+        if authenticated_user.tipo_usuario == "admin" :
+            if tipo_usuario == "admin" or tipo_usuario == "taller" or tipo_usuario == "cliente":
+                authenticated_user.tipo_usuario = tipo_usuario
+            else:
+                return JsonResponse({"error": "Tipo de usuario no válido"}, status=409)
 
         try:
             authenticated_user.save()
@@ -615,9 +691,17 @@ def datos_usuario(request):
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
     
-    return render(request, 'perfil/datos_usuario.html', {
-        'user': authenticated_user
-    })
+    if request.method == "GET":
+
+        tipo_usuario = authenticated_user.tipo_usuario
+        
+        return render(request, 'perfil/datos_usuario.html', {
+            'user': authenticated_user,
+            'tipo_usuario': tipo_usuario
+        })
+    
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
 
 
 def contraseña(request):
@@ -664,7 +748,7 @@ def contraseña(request):
 
         
 # MÉTODOS PARA LOS ENCARGADOS DE LAS EMPRESAS
-def empresa(request):
+def encargado(request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
@@ -687,15 +771,25 @@ def datos_empresa(request):
 
     if request.method == "GET":
 
-        empresa_obj = authenticated_user.empresa
-        empleados = Usuario.objects.filter(empresa=empresa_obj)
-        ticket_count = Ticket.objects.filter(idUsuario__empresa=empresa_obj).count()
+        empresa_id = authenticated_user.empresa.id
 
-        return render(request, 'encargado/empresa.html', {
-            'user': authenticated_user,
-            'empresa': empresa_obj,
-            'empleados': empleados,
-            'ticket_count': ticket_count,
+        try:
+            empresa = Empresa.objects.get(id = empresa_id)
+        except Empresa.DoesNotExist:
+            return render(request, 'perfil.html', {'error': 'La empresa no existe'})
+        
+        usuarios_empresa = Usuario.objects.filter(empresa__id = empresa_id)
+
+        is_admin = False
+
+        if authenticated_user.tipo_usuario == "admin":
+            is_admin = True
+
+        return render (request, 'encargado/empresa.html', {
+            'empresa': empresa,
+            'empleados': usuarios_empresa,
+            'is_admin': is_admin,
+
         })
 
     if request.method == "PUT":
@@ -713,7 +807,7 @@ def datos_empresa(request):
         if nombre is not None:
             empresa_obj.nombre = nombre
 
-        if correo is not None:
+        if correo is not None and correo != "":
             if Empresa.objects.filter(correo = correo).exclude(id = empresa_obj.id).exists():
                 return JsonResponse({"error": "El correo electrónico ya está en uso"})
             empresa_obj.correo = correo
@@ -721,12 +815,17 @@ def datos_empresa(request):
         else:
             empresa_obj.correo = None
 
-        if encargado_username is not None:
+        if encargado_username is not None and encargado_username != "":
             try:
                 nuevo_encargado = Usuario.objects.get(username=encargado_username, empresa=empresa_obj)
-                empresa_obj.encargado = nuevo_encargado
+                
             except Usuario.DoesNotExist:
                 return JsonResponse({"error": "El nuevo encargado no es un empleado de la empresa"}, status=400)
+        
+        elif encargado_username == "":
+            nuevo_encargado = None
+
+        empresa_obj.encargado = nuevo_encargado
 
         try:
             empresa_obj.save()
@@ -809,8 +908,27 @@ def usuarios_empresa (request):
 
         return render (request, 'encargado/usuarios_empresa.html', {
             "usuarios": usuarios
-        })    
+        })  
 
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
+
+# MÉTODOS PARA USUARIOS DEL TALLER
+def taller (request):
+    
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    
+    if request.method == "GET":
+
+
+        return render (request, "taller/menu_taller.html")
+
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
 
 
 #MÉTODOS PARA ADMINISTRADORES
@@ -836,6 +954,10 @@ def administrador(request):
             
         })
 
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
 
 
 def gestion_tickets(request):
@@ -843,7 +965,10 @@ def gestion_tickets(request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.tipo_usuario != "admin":
+
+    usuario = authenticated_user
+
+    if usuario.tipo_usuario != "admin" and usuario.tipo_usuario != "taller":
         return render (request, "error.html")
 
     if request.method == "GET":
@@ -888,18 +1013,26 @@ def gestion_tickets(request):
             'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
         })
 
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
 
 def gestion_empresas(request):
     # Verificar si el usuario está autenticado
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.tipo_usuario != "admin":
+    
+    usuario = authenticated_user
+
+    if usuario.tipo_usuario != "admin" and usuario.tipo_usuario != "taller":
         return render (request, "error.html")
     
     if request.method == "GET":
     
         empresas = Empresa.objects.all().order_by('id')
+
+        campos = empresas
         
         return render(request, 'admin/gestion_empresas.html', {
             'empresas': empresas
@@ -913,7 +1046,8 @@ def empresa_id (request, empresa_id):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.tipo_usuario != "admin":
+    
+    if authenticated_user.tipo_usuario != "admin" and authenticated_user.tipo_usuario != "taller":
         return render (request, "error.html")
 
     if request.method == "GET":
@@ -921,12 +1055,25 @@ def empresa_id (request, empresa_id):
             empresa = Empresa.objects.get(id = empresa_id)
         except Empresa.DoesNotExist:
             return render(request, 'perfil.html', {'error': 'La empresa no existe'})
+        
+        usuarios_empresa = Usuario.objects.filter(empresa__id = empresa_id)
+        print(usuarios_empresa)
+
+        is_admin = False
+
+        if authenticated_user.tipo_usuario == "admin":
+            is_admin = True
 
         return render (request, 'admin/empresa_id.html', {
-            'empresa': empresa
+            'empresa': empresa,
+            'empleados': usuarios_empresa,
+            'is_admin': is_admin,
         })
 
     if request.method == "PUT":
+
+        if authenticated_user.tipo_usuario != "admin":
+            JsonResponse({"error": "No tienes permiso para editar esta empresa"}, status= 403)
 
         try:
             data = json.loads(request.body)
@@ -943,6 +1090,8 @@ def empresa_id (request, empresa_id):
         correo = data.get("correo")
 
         # COMPROBACIONES
+        if nombre == "" or nombre == "None":
+            nombre = empresa.nombre
 
         # que el nombre no esté ya en uso
         if nombre and Empresa.objects.filter(nombre = nombre).exclude(id = empresa.id).exists():
@@ -953,6 +1102,9 @@ def empresa_id (request, empresa_id):
         # que el correo no esté ya en uso
         if correo and Empresa.objects.filter(correo = correo).exclude(id = empresa.id).exists():
             return JsonResponse({"error": "El correo electrónico ya está en uso"}, status = 409)
+        
+        if correo == "" or correo == "None":
+            correo = None
         
         empresa.correo = correo
 
@@ -968,19 +1120,23 @@ def empresa_id (request, empresa_id):
             if Empresa.objects.filter(encargado__username=encargado).exclude(id=empresa.id).exists():
                 return JsonResponse({"error": "El usuario encargado ya es encargado de otra empresa"}, status=409)
 
+            if empresa.id != encargado_obj.empresa.id:
+                return JsonResponse({"error": "El usuario no pertenece a la empresa"}, status=409)
+
             empresa.encargado = encargado_obj
 
         try:
             empresa.save()
-            return JsonResponse({
-                "success": True,
-                "redirect_url": "/admin/perfil/"
-            }, status=200)
+            return JsonResponse({ "success": True }, status=200)
         
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
     if request.method == "DELETE":
+
+        if authenticated_user.tipo_usuario != "admin":
+            JsonResponse({"error": "No tienes permiso para editar esta empresa"}, status= 403)
+
         try:
             empresa = Empresa.objects.get(id=empresa_id)
         except Empresa.DoesNotExist:
@@ -1011,9 +1167,10 @@ def crear_empresa(request):
     if request.method == "POST":
 
         nombre = request.POST.get("nombre")
-        encargado_username = request.POST.get("encargado")
         correo = request.POST.get("correo")
 
+        if correo == "":
+            correo = None
 
         try:
             # Verificar si el usuario ya existe
@@ -1022,22 +1179,12 @@ def crear_empresa(request):
                     'error': 'El nombre de empresa ya existe'
                 })
 
-            # Buscar el usuario encargado si se proporciona
-            encargado_obj = None
-            if encargado_username:
-                try:
-                    encargado_obj = Usuario.objects.get(username=encargado_username)
-                except Usuario.DoesNotExist:
-                    return render(request, 'admin/crear_empresa.html', {
-                        'error': 'El usuario encargado no existe'
-                    })
 
             empresa = Empresa.objects.create(
                 nombre=nombre,
-                encargado=encargado_obj,
                 correo=correo,
             )
-
+ 
             empresa.save()
 
             return HttpResponseRedirect('/perfil/')
@@ -1074,7 +1221,10 @@ def usuario_id(request, usuario_id):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.tipo_usuario != "admin" and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+
+    es_encargado = str(authenticated_user.empresa.encargado) == str(authenticated_user.username)
+
+    if authenticated_user.tipo_usuario != "admin" and es_encargado == True and authenticated_user.tipo_usuario != "taller":
         return render (request, "error.html")
     
         
@@ -1084,16 +1234,17 @@ def usuario_id(request, usuario_id):
             usuario = Usuario.objects.get(id=usuario_id)
         except Usuario.DoesNotExist:
             return render(request, 'usuario.html', {'error': 'El usuario no existe'})
-
-        es_encargado = str(authenticated_user.empresa.encargado) == str(authenticated_user.username)
-        print(es_encargado)
         
         if authenticated_user.tipo_usuario != "admin":
-            if es_encargado != True or usuario.empresa.nombre != authenticated_user.empresa.nombre:
+            if es_encargado != True and authenticated_user.tipo_usuario != "taller":
                 return render(request, 'error.html', {'error': 'No tienes permiso para ver este usuario'})
         
+        empresas = Empresa.objects.all()
         
-        return render(request, 'admin/usuario_id.html', {'user': usuario})
+        return render(request, 'admin/usuario_id.html', {
+            'user': usuario,
+            'empresas': empresas
+            })
 
     if request.method == "DELETE":
         try:
@@ -1123,18 +1274,12 @@ def usuario_id(request, usuario_id):
 
         username = data.get("username")
         nombre = data.get("nombre")
-        empresa_nombre = data.get("empresa")
+        empresa = data.get("empresa")
         correo = data.get("correo")
-        password_actual = data.get("contrasena_actual")
-        password = data.get("contrasena_nueva")
-        confirm_password = data.get("contrasena_nueva_confirmar")
         tipo_usuario = data.get("tipo_usuario")
 
-        if password_actual and not bcrypt.checkpw(password_actual.encode('utf8'), authenticated_user.password.encode('utf8')):
-            return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
-
-        if username == "" or correo == "" or nombre == "" or empresa_nombre == "":
-            return JsonResponse({"error": "No se han proporcionado campos para actualizar"}, status=400)
+        if username == "" or correo == "" or nombre == "" or empresa == "":
+            return JsonResponse({"error": "Los campos no pueden estar vacíos"}, status=400)
 
         if username:
             if Usuario.objects.filter(username=username).exclude(id=usuario.id).exists():
@@ -1149,19 +1294,13 @@ def usuario_id(request, usuario_id):
         if nombre is not None:
             usuario.nombre = nombre
 
-        if empresa_nombre is not None:
-            empresa_obj, _ = Empresa.objects.get_or_create(
-                nombre=empresa_nombre,
-                defaults={'encargado': usuario.username}
-            )
-            usuario.empresa = empresa_obj
+        if empresa is not None:
+            empresa_obj = Empresa.objects.get(id = empresa)
+
+        usuario.empresa=empresa_obj
 
 
-        if password and password.strip() != "":
-            if password != confirm_password:
-                return JsonResponse({"error": "Las contraseñas no coinciden"}, status=400)
-            hashed_password = bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt()).decode('utf8')
-            usuario.password = hashed_password
+        usuario.tipo_usuario = tipo_usuario
 
         try:
             usuario.save()
@@ -1211,6 +1350,7 @@ def contraseña_admin(request, usuario_id):
 
 
         # Para compara la contraseña del usuario con la que se envia la petición
+
         # if password_actual and not bcrypt.checkpw(password_actual.encode('utf8'), usuario.password.encode('utf8')):
         #     return JsonResponse({"error": "La contraseña actual es incorrecta"}, status=401)
         
@@ -1239,7 +1379,6 @@ def crear_usuario_admin (request):
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
 
-
     if authenticated_user.tipo_usuario != 'admin' and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
         return render (request, "error.html")
     
@@ -1265,6 +1404,7 @@ def crear_usuario_admin (request):
         })
 
     if request.method == "POST":
+
         username = request.POST.get("username")
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
@@ -1346,8 +1486,7 @@ def gestion_dispositivos (request):
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
 
-
-    if authenticated_user.tipo_usuario != 'admin' and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+    if authenticated_user.tipo_usuario != 'admin' and authenticated_user.tipo_usuario != 'taller':
         return render (request, "error.html")
     
 
@@ -1373,7 +1512,7 @@ def crear_dispositivo (request):
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
 
-    if authenticated_user.tipo_usuario != 'admin' and str(authenticated_user.empresa.encargado) != str(authenticated_user.username):
+    if authenticated_user.tipo_usuario != 'admin' and authenticated_user.tipo_usuario != 'taller':
         return render (request, "error.html")
 
 
@@ -1404,5 +1543,67 @@ def crear_dispositivo (request):
                 'error': str(e)
             })
 
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
+
+
+def dispositivo_id (request, dispositivo_id):
+    authenticated_user = __get_request_user(request)
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+
+    try:
+        dispositivo = Dispositivo.objects.get(id = dispositivo_id)
+    except Dispositivo.DoesNotExist:
+        return JsonResponse ("El dispositivo con ese ID no existe")
+
+    if authenticated_user.tipo_usuario != 'admin' and authenticated_user.tipo_usuario != 'taller':
+        return render (request, "error.html")
+    
+    if request.method == "GET":
+
+        return render (request, "admin/dispositivo_id.html", {
+            "dispositivo" : dispositivo,
+        })
+
+    if request.method == "PUT":
+
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return JsonResponse({"error": "JSON inválido"}, status=400)
+        
+        nombre = data.get("nombre")
+
+        # comprueba que el campo nombre no pueda estar vacío
+        if nombre == "":
+          return JsonResponse({"error": "El nombre no puede estar vacio o nulo"}, status = 409)
+
+        # comprueba que el nombre de dispositivo no esté en uso
+        if nombre and Dispositivo.objects.filter(nombre = nombre).exclude(id = dispositivo_id).exists():
+            return JsonResponse({"error": "El nombre de dispositivo ya existe"}, status = 409)
+
+        dispositivo.nombre = nombre
+    
+        try:
+            dispositivo.save()
+            return JsonResponse({
+                "success": True,
+                "redirect_url": "/gestion_dispositivos/"
+            }, status=200)
+        
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+    if request.method == "DELETE":
+
+        try:
+            dispositivo.delete()
+            return JsonResponse({"success": True}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+        
     else:
         return JsonResponse({"message": "Método no permitido"}, status=405)

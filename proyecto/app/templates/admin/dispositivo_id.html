@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ empresa.nombre }}{% endblock %}
+{% block title %}{{ dispositivo.nombre }}{% endblock %}
 
 {% block head %}
 
@@ -10,91 +10,53 @@
 {% endblock %}
 
 {% block content %}
-<h1>{{ empresa.nombre }}</h1>
-<h2>Datos de empresa</h2>
+<h1>{{ dispositivo.nombre }}</h1>
+<h2>Datos de dispositivo</h2>
 
 <div class="datos">
     {% csrf_token %}
 
     <div class="nombre">
         <p>Nombre:</p>
-        <p>{{ empresa.nombre }}</p>
-        <input type="text" name="nombre" value="{{ empresa.nombre }}" required hidden>
+        <p>{{ dispositivo.nombre }}</p>
+        <input type="text" name="nombre" value="{{ dispositivo.nombre }}" required hidden>
     </div>
 
-    <div class="encargado">
-        <p>Encargado:</p>
-        {% if empresa.encargado != None %}
-        <p>{{ empresa.encargado }}</p>
-        {% endif %}
 
-        <select name="encargado" required hidden>
-            <option value="">Seleccione un encargado</option>
-            {% for empleado in empleados %}
-            <option value="{{ empleado.username }}" {% if empresa.encargado and empresa.encargado.username == empleado.username %}selected{% endif %}>{{ empleado.username }}</option>
-            {% endfor %}
-        </select>
-
-    </div>
-
-    <div class="n_tickets">
-        <p>Número de tickets:</p>
-        <p>{{ empresa.numero_tickets }}</p>
-    </div>
-
-    <div class="correo"> 
-        <p>Correo electrónico:</p>
-        {% if empresa.correo != None %}
-        <p>{{ empresa.correo }}</p>
-        {% endif %}
-        <input type="text" name="correo" value="{{ empresa.correo }}" required hidden>
-    </div>
-    <a href="/gestion_empresas/" class="volver">Volver</a>
-
-    {% if is_admin %}
     <a href="#" class="editar">Editar</a>
     
-    <a href="#" class="eliminar">Eliminar empresa</a>
+    <a href="/gestion_dispositivos/" class="volver">Volver</a>
 
-    {% endif %}
-    
+    <a href="#" class="eliminar">Eliminar dispositivo</a>
 </div>
 
 <script>
-const datosEmpresaDiv = document.querySelector('.datos');
-const editarLink = datosEmpresaDiv.querySelector('.editar'); 
-const volverLink = datosEmpresaDiv.querySelector('.volver');
-const deleteBtn = datosEmpresaDiv.querySelector('.eliminar');
+const datosDispositivoDiv = document.querySelector('.datos');
+const editarLink = datosDispositivoDiv.querySelector('.editar'); 
+const volverLink = datosDispositivoDiv.querySelector('.volver');
+const deleteBtn = datosDispositivoDiv.querySelector('.eliminar');
 const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
 
-const empresaId = "{{ empresa.id }}";
+const dispositivoId = "{{ dispositivo.id }}";
 const originalData = {
     nombre: getInputValue('input[name="nombre"]'),
-    encargado: getInputValue('select[name="encargado"]'),
-    correo: getInputValue('input[name="correo"]')
 };
 
 function getInputValue(selector) {
-    const input = datosEmpresaDiv.querySelector(selector);
+    const input = datosDispositivoDiv.querySelector(selector);
     return input ? input.value.trim() : '';
 }
 
 function restoreOriginalValues() {
-    const nombreInput = datosEmpresaDiv.querySelector('input[name="nombre"]');
-    const encargadoSelect = datosEmpresaDiv.querySelector('select[name="encargado"]');
-    const correoInput = datosEmpresaDiv.querySelector('input[name="correo"]');
-
+    const nombreInput = datosDispositivoDiv.querySelector('input[name="nombre"]');
 
     if (nombreInput) nombreInput.value = originalData.nombre;
-    if (encargadoSelect) encargadoSelect.value = originalData.encargado;
-    if (correoInput) correoInput.value = originalData.correo;
-
 }
 
 function setEditingMode(editing) {
-    const fieldClasses = ['.nombre', '.encargado', '.correo', 'telefono'];
+    const fieldClasses = ['.nombre'];
     fieldClasses.forEach(fieldClass => {
-        const container = datosEmpresaDiv.querySelector(fieldClass);
+        const container = datosDispositivoDiv.querySelector(fieldClass);
         if (!container) return;
         const text = container.querySelector('p:nth-child(2)');
         const input = container.querySelector('input, select');
@@ -111,7 +73,7 @@ function setEditingMode(editing) {
             volverLink.href = '#';
         } else {
             volverLink.textContent = 'Volver';
-            volverLink.href = '/gestion_empresas/';
+            volverLink.href = '/gestion_dispositivos/';
         }
     }
 }
@@ -121,19 +83,19 @@ function showError(message) {
 }
 
 function clearError() {
-    const errorEl = datosEmpresaDiv.querySelector('.error-message');
+    const errorEl = datosDispositivoDiv.querySelector('.error-message');
     if (errorEl) {
         errorEl.remove();
     }
 }
 
-async function eliminarEmpresa() {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta empresa?')) {
+async function eliminarDispositivo() {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta dispositivo?')) {
         return;
     }
 
     try {
-        const response = await fetch(`/datos_empresa/{{ empresa.id }}/`, {
+        const response = await fetch(`/datos_dispositivo/{{ dispositivo.id }}/`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -144,11 +106,11 @@ async function eliminarEmpresa() {
 
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-            throw new Error(data.error || data.message || 'Error al eliminar la empresa.');
+            throw new Error(data.error || data.message || 'Error al eliminar el dispositivo.');
         }
 
-        alert('Empresa eliminada correctamente.');
-        window.location.href = '/gestion_empresas/';
+        alert('Dispositivo eliminado correctamente.');
+        window.location.href = '/gestion_dispositivos/';
     } catch (error) {
         alert(error.message);
     }
@@ -159,18 +121,13 @@ async function guardarCambios() {
     clearError();
 
     const nombre = getInputValue('input[name="nombre"]');
-    const encargado = getInputValue('select[name="encargado"]');
-    // const numero_tickets = getInputValue('input[name="numero_tickets"]');
-    const correo = getInputValue('input[name="correo"]');
 
     const payload = {
         nombre,
-        encargado,
-        correo,
     };
 
     try {
-        const response = await fetch(`/datos_empresa/{{ empresa.id }}/`, {
+        const response = await fetch(`/datos_dispositivo/{{ dispositivo.id }}/`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -211,7 +168,7 @@ editarLink.addEventListener('click', function(event) {
 if (deleteBtn) {
     deleteBtn.addEventListener('click', function(event) {
         event.preventDefault();
-        eliminarEmpresa();
+        eliminarDispositivo();
     });
 }
 

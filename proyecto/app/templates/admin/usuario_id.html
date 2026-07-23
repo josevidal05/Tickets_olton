@@ -4,13 +4,15 @@
 {% block title %}Usuario #{{ user.id }}{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'css/datos_usuario.css' %}">
+
+<link rel="stylesheet" href="{% static 'css/datos.css' %}">
+
 {% endblock %}
 
 {% block content %}
 <h1>Datos de usuario #{{ user.id }}</h1>
 
-<div class="datos-usuario">
+<div class="datos">
     {% csrf_token %}
 
     <div class="username">
@@ -28,7 +30,11 @@
     <div class="empresa">
         <p>Empresa:</p>
         <p>{{ user.empresa }}</p>
-        <input type="text" name="empresa" value="{{ user.empresa }}" required hidden>
+        <select name="empresa" required hidden>
+            {% for empresa in empresas %}
+            <option value="{{ empresa.id }}" {% if user.empresa and empresa.id == user.empresa.id %}selected{% endif %}>{{ empresa.nombre }}</option>
+            {% endfor %}
+        </select>
     </div>
 
     <div class="correo"> 
@@ -37,41 +43,47 @@
         <input type="text" name="correo" value="{{ user.correo }}" required hidden>
     </div>
 
-    <div class="administrador"> 
+    <div class="tipo_usuario"> 
         <p>Tipo de usuario:</p>
         <p>{{ user.tipo_usuario }}</p>
-        <select name="tipo_usuario" required hidden>
-            <option value="cliente">Cliente</option>
-            <option value="taller">Taller</option>
-            <option value="admin">Administrador</option>
+        <select value="{{ user.tipo_usuario }}" name="tipo_usuario" required hidden>
+            <option value="cliente" {% if user.tipo_usuario == 'cliente' %}selected{% endif %}>Cliente</option>
+            <option value="taller" {% if user.tipo_usuario == 'taller' %}selected{% endif %}>Taller</option>
+            <option value="admin" {% if user.tipo_usuario == 'admin' or user.tipo_usuario == 'Admin' %}selected{% endif %}>Administrador</option>
         </select>
     </div>
 
+    {% if is_admin %}
     <div class="password">
         <a href="/cambiar_contraseña/{{ user.id }}/" class="enlace_password">Cambiar contraseña</a>
     </div>
+    {% endif %}
 
+    <a href="/gestion_usuarios/" class="volver">Volver</a>
+
+    {% if is_admin %}
     <a href="#" class="editar">Editar</a>
     
-    <a href="/perfil" class="volver">Volver</a>
+    <a href="#" class="eliminar">Eliminar empresa</a>
 
-    <a href="#" class="eliminar-usuario">Eliminar usuario</a>
+    {% endif %}
+    
 </div>
 
 <script>
-const datosUsuarioDiv = document.querySelector('.datos-usuario');
+const datosUsuarioDiv = document.querySelector('.datos');
 const editarLink = datosUsuarioDiv.querySelector('.editar');
 const volverLink = datosUsuarioDiv.querySelector('.volver');
-const deleteBtn = datosUsuarioDiv.querySelector('.eliminar-usuario');
+const deleteBtn = datosUsuarioDiv.querySelector('.eliminar');
 const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
 
 const userId = "{{ user.id }}";
 const originalData = {
     username: getInputValue('input[name="username"]'),
     nombre: getInputValue('input[name="nombre"]'),
-    empresa: getInputValue('input[name="empresa"]'),
+    empresa: getSelectValue('select[name="empresa"]'),
     correo: getInputValue('input[name="correo"]'),
-    admin: datosUsuarioDiv.querySelector('.admin-input') ? datosUsuarioDiv.querySelector('.admin-input').checked : false
+    tipo_usuario: getSelectValue('select[name="tipo_usuario"]'),
 };
 
 function getInputValue(selector) {
@@ -79,31 +91,42 @@ function getInputValue(selector) {
     return input ? input.value.trim() : '';
 }
 
+function getSelectValue(selector) {
+    const select = datosUsuarioDiv.querySelector(selector);
+    return select ? select.value.trim() : '';
+}
+
 function restoreOriginalValues() {
     const usernameInput = datosUsuarioDiv.querySelector('input[name="username"]');
     const nombreInput = datosUsuarioDiv.querySelector('input[name="nombre"]');
-    const empresaInput = datosUsuarioDiv.querySelector('input[name="empresa"]');
+    const empresaSelect = datosUsuarioDiv.querySelector('select[name="empresa"]');
     const correoInput = datosUsuarioDiv.querySelector('input[name="correo"]');
-    const adminInput = datosUsuarioDiv.querySelector('.admin-input');
+    const tipoUsuarioSelect = datosUsuarioDiv.querySelector('select[name="tipo_usuario"]');
 
     if (usernameInput) usernameInput.value = originalData.username;
     if (nombreInput) nombreInput.value = originalData.nombre;
-    if (empresaInput) empresaInput.value = originalData.empresa;
+    if (empresaSelect) empresaSelect.value = originalData.empresa;
     if (correoInput) correoInput.value = originalData.correo;
-    if (adminInput) adminInput.checked = originalData.admin;
+    if (tipoUsuarioSelect) tipoUsuarioSelect.value = originalData.tipo_usuario;
 }
 
 function setEditingMode(editing) {
-    const textFields = ['.username', '.nombre', '.empresa', '.correo'];
+    const textFields = ['.username', '.nombre', '.empresa', '.correo', '.tipo_usuario'];
     textFields.forEach(fieldClass => {
         const container = datosUsuarioDiv.querySelector(fieldClass);
         if (!container) return;
         const text = container.querySelector('p:nth-child(2)');
         const input = container.querySelector('input');
+        const select = container.querySelector('select');
+
         if (text) text.style.display = editing ? 'none' : 'block';
         if (input) {
             input.hidden = !editing;
             input.style.display = editing ? 'block' : 'none';
+        }
+        if (select) {
+            select.hidden = !editing;
+            select.style.display = editing ? 'block' : 'none';
         }
     });
 
@@ -118,20 +141,20 @@ function setEditingMode(editing) {
     // Password fields may not exist in this template — guard access
     const passwordContainer = datosUsuarioDiv.querySelector('.password');
     const confirmPasswordContainer = datosUsuarioDiv.querySelector('.confirm_password');
-    let passwordLabel, passwordInput, confirmPasswordLabel, confirmPasswordInput;
-    if (passwordContainer) {
-        passwordLabel = passwordContainer.querySelector('p');
-        passwordInput = passwordContainer.querySelector('input');
-    }
-    if (confirmPasswordContainer) {
-        confirmPasswordLabel = confirmPasswordContainer.querySelector('p');
-        confirmPasswordInput = confirmPasswordContainer.querySelector('input');
-    }
+    // let passwordLabel, passwordInput, confirmPasswordLabel, confirmPasswordInput;
+    // if (passwordContainer) {
+    //     passwordLabel = passwordContainer.querySelector('p');
+    //     passwordInput = passwordContainer.querySelector('input');
+    // }
+    // if (confirmPasswordContainer) {
+    //     confirmPasswordLabel = confirmPasswordContainer.querySelector('p');
+    //     confirmPasswordInput = confirmPasswordContainer.querySelector('input');
+    // }
 
-    if (passwordLabel) passwordLabel.hidden = !editing;
-    if (passwordInput) { passwordInput.hidden = !editing; passwordInput.style.display = editing ? 'block' : 'none'; }
-    if (confirmPasswordLabel) confirmPasswordLabel.hidden = !editing;
-    if (confirmPasswordInput) { confirmPasswordInput.hidden = !editing; confirmPasswordInput.style.display = editing ? 'block' : 'none'; }
+    // if (passwordLabel) passwordLabel.hidden = !editing;
+    // if (passwordInput) { passwordInput.hidden = !editing; passwordInput.style.display = editing ? 'block' : 'none'; }
+    // if (confirmPasswordLabel) confirmPasswordLabel.hidden = !editing;
+    // if (confirmPasswordInput) { confirmPasswordInput.hidden = !editing; confirmPasswordInput.style.display = editing ? 'block' : 'none'; }
 
     if (volverLink) {
         if (editing) {
@@ -187,8 +210,9 @@ async function guardarCambios() {
 
     const username = getInputValue('input[name="username"]');
     const nombre = getInputValue('input[name="nombre"]');
-    const empresa = getInputValue('input[name="empresa"]');
+    const empresa = getSelectValue('select[name="empresa"]');
     const correo = getInputValue('input[name="correo"]');
+    const tipo_usuario = getSelectValue('select[name="tipo_usuario"]');
     const password = getInputValue('input[name="password"]');
     const confirmPassword = getInputValue('input[name="confirm_password"]');
 
@@ -197,8 +221,6 @@ async function guardarCambios() {
         return;
     }
 
-    const adminInput = datosUsuarioDiv.querySelector('.admin-input');
-    const adminValue = adminInput ? adminInput.checked : false;
 
     const payload = {
         username,
@@ -207,7 +229,7 @@ async function guardarCambios() {
         correo,
         password,
         confirm_password: getInputValue('input[name="confirm_password"]'),
-        admin: adminValue
+        tipo_usuario
     };
 
     try {

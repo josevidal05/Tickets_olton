@@ -87,6 +87,11 @@
     </table>
 </div>
 
+<div class="botones">
+    <button id="volver">Volver</button>
+</div>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const filtros = document.querySelector('.filtros');
@@ -103,6 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('click', e => {
         e.stopPropagation();
         setOpen(!filtros.classList.contains('open'));
+    });
+
+    const clearButton = filtros.querySelector('.btn-limpiar');
+    if (clearButton) {
+        clearButton.addEventListener('click', e => {
+            e.preventDefault();
+            window.location.href = window.location.pathname;
+        });
+    }
+
+    const volverBtn = document.getElementById('volver');
+    volverBtn.addEventListener('click', () => {
+        window.history.back();
     });
 
     // Cerrar al pulsar fuera

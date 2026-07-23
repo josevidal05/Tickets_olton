@@ -12,6 +12,9 @@ def user_permissions(request):
     if header_token:
         try:
             user = Usuario.objects.get(token_sesion=header_token)
+            if not user.is_session_token_valid():
+                user.clear_session_token()
+                user = None
         except Usuario.DoesNotExist:
             user = None
 
@@ -20,6 +23,10 @@ def user_permissions(request):
         if session_token:
             try:
                 user = Usuario.objects.get(token_sesion=session_token)
+                if not user.is_session_token_valid():
+                    user.clear_session_token()
+                    user = None
+                    request.session.pop('session_token', None)
             except Usuario.DoesNotExist:
                 user = None
 
