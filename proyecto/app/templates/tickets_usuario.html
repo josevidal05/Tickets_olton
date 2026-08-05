@@ -24,23 +24,25 @@
 
     <div class="filter-panel" aria-hidden="true">
         <form method="get" class="filtro-form">
-            <div class="filtro-item">
+            <!-- <div class="filtro-item">
                 <label for="usuario">Usuario</label>
                 <input id="usuario" name="usuario" type="text" value="{{ filtros.usuario }}" placeholder="Usuario">
-            </div>
+            </div> -->
             <div class="filtro-item">
                 <label for="id_dispositivo">ID dispositivo</label>
                 <input id="id_dispositivo" name="id_dispositivo" type="text" value="{{ filtros.id_dispositivo }}" placeholder="ID dispositivo">
             </div>
+
             <div class="filtro-item">
                 <label for="tipo_dispositivo">Tipo dispositivo</label>
                 <select id="tipo_dispositivo" name="tipo_dispositivo">
                     <option value="">Todos</option>
-                    {% for value, label in tipo_dispositivo_choices %}
-                    <option value="{{ value }}" {% if filtros.tipo_dispositivo == value %}selected{% endif %}>{{ label }}</option>
+                    {% for dispositivo in dispositivos %}
+                    <option value="{{ dispositivo.nombre }}" {% if filtros.tipo_dispositivo == dispositivo.nombre %}selected{% endif %}>{{ dispositivo.nombre }}</option>
                     {% endfor %}
                 </select>
             </div>
+
             <div class="filtro-item">
                 <label for="estado">Estado</label>
                 <select id="estado" name="estado">
@@ -50,10 +52,14 @@
                     {% endfor %}
                 </select>
             </div>
+
             <div class="filtro-item">
                 <label for="fecha">Fecha</label>
                 <input id="fecha" name="fecha" type="date" value="{{ filtros.fecha }}">
             </div>
+
+            <div></div>
+            
             <div class="filtro-item filtro-botones">
                 <button type="submit">Filtrar</button>
                 <a href="" class="btn-limpiar">Limpiar</a>
@@ -62,7 +68,8 @@
     </div>
 </div>
 
-<div class="tabla_tickets">
+<h3>Tickets sin finalizar</h3>
+<div class="tabla">
     <table>
         <tr class="cabecera_tabla">
             <th>ID</th>
@@ -74,6 +81,7 @@
             <th>Fecha</th>
         </tr>
         {% for ticket in tickets %}
+        {% if ticket.estado != 'finalizado' %}
         <tr class="fila_tabla" onclick="window.location='/ticket/{{ ticket.id }}/';" style="cursor:pointer;">
             <td>{{ ticket.id }}</td>
             <td>{{ ticket.idUsuario.empresa.nombre }}</td>
@@ -83,6 +91,37 @@
             <td>{{ ticket.estado }}</td>
             <td>{{ ticket.fecha_creacion }}</td>
         </tr>
+        {% endif %}
+        {% endfor %}
+    </table>
+</div>
+
+<!-- TICKETS YA FINALIZADOS -->
+<h3>Tickets finalizados</h3>
+<div class="tabla_tickets_finalizados">
+    <table>
+        <tr class="cabecera_tabla">
+            <th>ID</th>
+            <th>Empresa</th>
+            <th>Usuario</th>
+            <th>ID dispositivo</th>
+            <th>Tipo dispositivo</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+        </tr>
+        
+        {% for ticket in tickets %}
+        {% if ticket.estado == 'finalizado' %}
+        <tr class="fila_tabla" onclick="window.location='/ticket/{{ ticket.id }}/';" style="cursor:pointer;">
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.idUsuario.empresa.nombre }}</td>
+            <td>{{ ticket.idUsuario.username }}</td>
+            <td>{{ ticket.id_dispositivo }}</td>
+            <td>{{ ticket.tipo_dispositivo }}</td>
+            <td>{{ ticket.estado }}</td>
+            <td>{{ ticket.fecha_creacion }}</td>
+        </tr>
+        {% endif %}
         {% endfor %}
     </table>
 </div>

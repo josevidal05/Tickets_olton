@@ -33,7 +33,7 @@ class Usuario(models.Model):
     nombre = models.CharField(max_length=100)
     empresa = models.ForeignKey('Empresa', on_delete=models.CASCADE, related_name='usuarios')
     correo = models.EmailField(max_length=254, unique=True)
-    token_sesion = models.CharField(max_length=150, null=True)
+    token_sesion = models.CharField(max_length=150, null=True, blank=True)
     token_sesion_expiracion = models.DateTimeField(null=True, blank=True)
 
     TIPO_USUARIO_CHOICES = [
@@ -94,20 +94,24 @@ class Ticket(models.Model):
     empresa_transporte = models.CharField(max_length=100)
 
     ESTADO_TICKET_CHOICES = [
-        ('leido', 'Leido'),
-        ('no leido', 'No leido'),
-        ('abierto', 'Abierto'),
-        ('cerrado', 'Cerrado'),
+        ('nuevo', 'Nuevo'),
+        ('pendiente', 'Pendiente'),
+        ('en progreso', 'En progreso'),
+        ('finalizado', 'Finalizado'),
     ]
 
     estado = models.CharField(
         max_length=20,
         choices=ESTADO_TICKET_CHOICES,
-        default='no leido'
+        default='nuevo'
     )
 
     idUsuario = models.ForeignKey('Usuario', on_delete=models.CASCADE, related_name='usuario_tickets')
+    usuario_asignado = models.ForeignKey('Usuario', on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets_asignados')
+    comentarios_taller = models.TextField(blank= True, null=True)
+
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return f"Ticket #{self.id} - {self.idUsuario.username}"

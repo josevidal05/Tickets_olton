@@ -15,6 +15,14 @@
     color: #17305d;
 }
 
+h3{
+    width: min(1120px, 92%);
+    margin: 32px auto 16px;
+
+    font-size: 1.5rem;
+    color: #17305d;
+}
+
 .btn-inicio {
     display: inline-flex;
     align-items: center;
@@ -178,7 +186,7 @@
     }
 }
 
-.tabla_tickets {
+.tabla, .tabla_tickets_finalizados {
     width: min(1120px, 92%);
     margin: 0 auto 45px;
     overflow-x: auto;

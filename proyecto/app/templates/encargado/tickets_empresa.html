@@ -26,7 +26,13 @@
 
             <div class="filtro-item">
                 <label for="usuario">Usuario</label>
-                <input id="usuario" name="usuario" type="text" value="{{ filtros.usuario }}" placeholder="Usuario">
+                <!-- <input id="usuario" name="usuario" type="text" value="{{ filtros.usuario }}" placeholder="Usuario"> -->
+                <select id="usuario" name="usuario">
+                    <option value="">Todos</option>
+                    {% for usuario in usuarios_empresa %}
+                    <option value="{{ usuario.username }}" {% if filtros.usuario == usuario.username %}selected{% endif %}>{{ usuario.username }}</option>
+                    {% endfor %}
+                </select>
             </div>
             
             <div class="filtro-item">
@@ -37,10 +43,12 @@
             <div class="filtro-item">
                 <label for="tipo_dispositivo">Tipo dispositivo</label>
                 <select id="tipo_dispositivo" name="tipo_dispositivo">
+
                     <option value="">Todos</option>
-                    {% for value, label in tipo_dispositivo_choices %}
-                    <option value="{{ value }}" {% if filtros.tipo_dispositivo == value %}selected{% endif %}>{{ label }}</option>
+                    {% for dispositivo in dispositivos %}
+                    <option value="{{ dispositivo.nombre }}" {% if filtros.tipo_dispositivo == dispositivo.nombre %}selected{% endif %}>{{ dispositivo.nombre }}</option>
                     {% endfor %}
+
                 </select>
             </div>
 
@@ -68,7 +76,7 @@
     </div>
 </div>
 
-<div class="tabla_tickets">
+<div class="tabla">
     <table>
         <tr class="cabecera_tabla">
             <th>ID</th>
@@ -79,6 +87,7 @@
             <th>Estado</th>
             <th>Fecha</th>
         </tr>
+
         {% for ticket in tickets %}
         <tr class="fila_tabla" onclick="window.location='/ticket/{{ ticket.id }}/';" style="cursor:pointer;">
             <td>{{ ticket.id }}</td>
@@ -90,6 +99,7 @@
             <td>{{ ticket.fecha_creacion }}</td>
         </tr>
         {% endfor %}
+        
     </table>
 </div>
 

@@ -5,34 +5,53 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e69b22c8-d118-4c8e-b3fa-5642adea8f83" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/static/css/styles.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/templates/comprobar_tickets.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/comprobar_tickets.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/static/css/datos_ticket.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/static/css/datos_ticket.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/static/css/perfil.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/static/css/perfil.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/admin/crear_usuario.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/admin/crear_usuario.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/admin/gestion_empresas.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/admin/gestion_empresas.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/admin/gestion_tickets.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/admin/gestion_tickets.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/admin/gestion_usuarios.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/admin/gestion_usuarios.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/admin/usuario_id.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/admin/usuario_id.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/crear_ticket.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/crear_ticket.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/encargado/tickets_empresa.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/encargado/tickets_empresa.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/encargado/usuarios_empresa.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/encargado/usuarios_empresa.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/perfil/datos_usuario.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/perfil/datos_usuario.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/perfil/perfil.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/perfil/perfil.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/ticket_id.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/ticket_id.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/tickets_usuario.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/tickets_usuario.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/views_ad.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/views_ad.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/proyecto/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/proyecto/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/Captura_8X3vpbu.PNG" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/autorenew_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/autorenew_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24_Vh6zCDD.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/autorenew_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24_a01pS1L.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/boleto-alternativo_1.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/editar-texto_2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/editar-texto_2_g81sdLv.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_J06KDn7.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_dTqFbEo.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_eariiZI.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_hYXemfu.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_iMUuefb.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_ticket.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_ticket_CcL0EPI.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_ticket_yCHkgYD.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/imagen_zS7BiPC.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/llamar_0I2GIHm.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/llamar_moVXQBY.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/recargar.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/recargar_MLyPLfj.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/test.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/ticket_8.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/tranvias_avatar_1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/upload.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/upload_V5ihPq5.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/tickets/usuario.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/proyecto/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/proyecto/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Conexiones.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Conexiones.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/InicioFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/InicioFragment.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/LoginActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/LoginActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/PerfilFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/PerfilFragment.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/RegistroActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/RegistroActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/SendRequestsForLoginOrRegister.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/SendRequestsForLoginOrRegister.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Ticket.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Ticket.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/TicketAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/TicketAdapter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/TicketFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/TicketFragment.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Ticket_idActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Ticket_idActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Usuario.java" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/java/com/example/tickets_android/Usuario.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/activity_datos_usuario.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/activity_datos_usuario.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/activity_ticket_id.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/activity_ticket_id.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_inicio.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_inicio.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_perfil.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_perfil.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/item_ticket.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/item_ticket.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_mi_empresa.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../tickets_android/app/src/main/res/layout/fragment_mi_empresa.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,25 +65,25 @@
     <commands />
     <urls />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 5
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
   <component name="ProjectId" id="3EOYFDfuxNRRTDtOkmZhqCuzKuG" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/Jose/tickets/proyecto"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Jose/tickets/proyecto&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

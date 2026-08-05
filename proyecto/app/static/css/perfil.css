@@ -58,10 +58,15 @@ h1 {
 }
 
 hr {
-    border: none;
     height: 1px;
     background: rgba(31, 58, 114, 0.1);
-    margin: 0;
+    margin: 10px 0px;
+    color: black;
+}
+
+/* para separar las partes del cliente con las del encargado y las del taller o administrador */
+.mi_empresa, .todas_empresas{
+    margin-top: 40px;
 }
 
 .cerrar-sesion {

@@ -4,6 +4,7 @@ import bcrypt
 from datetime import datetime, timedelta
 
 from django.http import JsonResponse, HttpResponseRedirect
+from django.http.multipartparser import MultiPartParser
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.utils import timezone
@@ -107,59 +108,62 @@ def registar_usuario(request):
 
 
 # Iniciar sesión
+@csrf_exempt
 def iniciar_sesion(request):
     if request.method == "GET":
         return render(request, "login.html")
  
-    if request.method != "POST":
-        return JsonResponse({"error": "Método no permitido"}, status=405)
+    if request.method == "POST":
  
-    username = request.POST.get("username", "").strip()
-    password = request.POST.get("password", "")
- 
-    if not username or not password:
-        return JsonResponse({"error": "Debes introducir el nombre de usuario y la contraseña."}, status=400)
- 
-    try:
-        user = Usuario.objects.get(username=username)
-    except Usuario.DoesNotExist:
-        return JsonResponse({"error": "El usuario no existe"}, status=401)
- 
-    try:
-        password_correcta = bcrypt.checkpw(
-            password.encode("utf-8"),
-            user.password.encode("utf-8")
-        )
- 
-    except (ValueError, AttributeError):
-        return JsonResponse(
-            {"error": "No se pudo comprobar la contraseña."},
-            status=500
-        )
- 
-    if not password_correcta:
-        return JsonResponse(
-            {"error": "Usuario o contraseña incorrectos"},
-            status=401
-        )
- 
-    if user.token_sesion and user.token_sesion_expiracion and user.is_session_token_valid():
-        token = user.token_sesion
-    else:
-        token = secrets.token_hex(16)
-    token_expiracion = timezone.now() + timedelta(hours=24)
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+    
+        if not username or not password:
+            return JsonResponse({"error": "Debes introducir el nombre de usuario y la contraseña."}, status=400)
+    
+        try:
+            user = Usuario.objects.get(username=username)
+        except Usuario.DoesNotExist:
+            return JsonResponse({"error": "El usuario no existe"}, status=401)
+    
+        try:
+            password_correcta = bcrypt.checkpw(
+                password.encode("utf-8"),
+                user.password.encode("utf-8")
+            )
+    
+        except (ValueError, AttributeError):
+            return JsonResponse(
+                {"error": "No se pudo comprobar la contraseña."},
+                status=500
+            )
+    
+        if not password_correcta:
+            return JsonResponse(
+                {"error": "Usuario o contraseña incorrectos"},
+                status=401
+            )
+    
+        if user.token_sesion and user.token_sesion_expiracion and user.is_session_token_valid():
+            token = user.token_sesion
+        else:
+            token = secrets.token_hex(16)
+        token_expiracion = timezone.now() + timedelta(hours=24)
 
-    user.token_sesion = token
-    user.token_sesion_expiracion = token_expiracion
-    user.save(update_fields=["token_sesion", "token_sesion_expiracion"])
- 
-    # Guardar el token en la sesión de Django
-    request.session["session_token"] = token
- 
-    return JsonResponse({
-        "success": True,
-        "redirect_url": "/perfil/"
-    })    
+        user.token_sesion = token
+        user.token_sesion_expiracion = token_expiracion
+        user.save(update_fields=["token_sesion", "token_sesion_expiracion"])
+    
+        # Guardar el token en la sesión de Django
+        request.session["session_token"] = token
+    
+        return JsonResponse({
+            "success": True,
+            "redirect_url": "/perfil/"
+        })    
+
+    else:
+        return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
 # Cerrar sesión
@@ -205,8 +209,11 @@ def crear_ticket(request):
             tipo_disp = request.POST.get("tipo_dispositivo")
             id_disp = request.POST.get("id_dispositivo")
             observaciones = request.POST.get("observaciones")
+            archivo = request.FILES.get("archivo")
             portes = request.POST.get("portes")
             transporte = request.POST.get("transporte")
+
+            print("archivo          ", archivo)
             
             if not all([tipo_disp, id_disp, observaciones, portes, transporte]):
                 return JsonResponse({"error": "Faltan campos obligatorios"}, status=400)
@@ -232,10 +239,10 @@ def crear_ticket(request):
                 tipo_dispositivo=tipo_dispositivo,
                 id_dispositivo=id_dispositivo,
                 observaciones=observaciones,
+                archivo=archivo,
                 portes=portes,
                 empresa_transporte=transporte,
-                archivo=request.FILES.get("archivo"),
-                estado="no leido",
+                estado="nuevo",
             )
 
             # Incrementar el contador de la empresa del usuario
@@ -289,7 +296,7 @@ def tickets_usuario(request):
                 tickets = tickets.filter(id_dispositivo__icontains=filtros['id_dispositivo'])
 
         if filtros['tipo_dispositivo']:
-            tickets = tickets.filter(tipo_dispositivo=filtros['tipo_dispositivo'])
+            tickets = tickets.filter(tipo_dispositivo__nombre=filtros['tipo_dispositivo'])
 
         if filtros['estado']:
             tickets = tickets.filter(estado=filtros['estado'])
@@ -301,11 +308,13 @@ def tickets_usuario(request):
             except ValueError:
                 pass
 
+        dispositivos = Dispositivo.objects.all()
+
         return render(request, 'tickets_usuario.html', {
             'user': authenticated_user,
             'tickets': tickets,
             'filtros': filtros,
-            # 'tipo_dispositivo_choices': Ticket.TIPO_DISPOSITIVO_CHOICES,
+            'dispositivos': dispositivos,
             'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
         })
 
@@ -314,6 +323,7 @@ def tickets_usuario(request):
 
 
 # Tickets por id (para poder modificarlos si es necesario)
+@csrf_exempt
 def ticket_id(request, ticket_id):
 
     authenticated_user = __get_request_user(request)
@@ -330,13 +340,13 @@ def ticket_id(request, ticket_id):
     is_taller = False
     is_propietario = False
 
-    print("encargado empresa ticket   =   ", str(ticket.idUsuario.empresa.encargado))
-    print("username registrado   =   ", str(authenticated_user.username))
-    print("encargado empresa registrado   =   ", str(authenticated_user.empresa.encargado))
+    # print("encargado empresa ticket   =   ", str(ticket.idUsuario.empresa.encargado))
+    # print("username registrado   =   ", str(authenticated_user.username))
+    # print("encargado empresa registrado   =   ", str(authenticated_user.empresa.encargado))
 
     # compruebo que el usuario autenticado es el encargado de SU empresa
     if str(authenticated_user.empresa.encargado) == str(authenticated_user.username):
-        print("El usuario es encargado de su empresa", authenticated_user.empresa)
+        # print("El usuario es encargado de su empresa", authenticated_user.empresa)
         
         if str(ticket.idUsuario.empresa.encargado) == str(authenticated_user.username):
             is_encargado = True
@@ -354,15 +364,13 @@ def ticket_id(request, ticket_id):
     if ticket.idUsuario != authenticated_user and is_admin == False and is_encargado == False and is_taller == False:
         return render(request, 'error.html', {'error': 'No tienes permiso para ver este ticket'})
     
-
-    print("------------------------------------------")
-    print("encargado final   =    ", is_encargado)
-    print("taller   =    ", is_taller)
-    print("admin   =    ", is_admin)
-    print("propietario   =   ", is_propietario)
+    # print("------------------------------------------")
+    # print("encargado final   =    ", is_encargado)
+    # print("taller   =    ", is_taller)
+    # print("admin   =    ", is_admin)
+    # print("propietario   =   ", is_propietario)
 
     if request.method== "GET":
-        print("------------ MÉTODO GET ------------------")
 
         try:
             ticket = Ticket.objects.get(id=ticket_id)
@@ -371,13 +379,16 @@ def ticket_id(request, ticket_id):
         
         dispositivos = Dispositivo.objects.all()
 
+        usuarios_taller = Usuario.objects.filter(tipo_usuario="taller")
+
         return render(request, 'ticket_id.html', {
             'ticket': ticket,
             'dispositivos': dispositivos,
             'is_admin': is_admin,
             'is_taller': is_taller,
             "is_propietario": is_propietario,
-            "is_encargado": is_encargado
+            "is_encargado": is_encargado,
+            "usuarios_taller": usuarios_taller,
         })
 
 
@@ -386,6 +397,9 @@ def ticket_id(request, ticket_id):
             ticket = Ticket.objects.get(id=ticket_id)
         except Ticket.DoesNotExist:
             return render(request, 'ticket_id.html', {'error': 'El ticket no existe'})
+
+        if is_propietario == False and is_encargado == False and is_admin == False:
+            return JsonResponse({"error": "No tienes permisos para borrar este ticket"}, status = 403)
         
         # Decrementar el contador de la empresa asociada al ticket antes de borrarlo
         empresa_obj = None
@@ -407,67 +421,105 @@ def ticket_id(request, ticket_id):
 
     elif request.method == 'PUT':
 
-        print("------------ MÉTODO PUT ------------------")
-
         try:
             ticket = Ticket.objects.get(id=ticket_id)
         except Ticket.DoesNotExist:
             return render(request, 'ticket_id.html', {'error': 'El ticket no existe'})
-        
+
+
+        if not (request.content_type and request.content_type.startswith('multipart/form-data')):
+            return JsonResponse({"error": "Se requiere multipart/form-data para actualizar el archivo."}, status=400)
+
         try:
-            data = json.loads(request.body)
-        except ValueError:
-            return JsonResponse({"error": "JSON inválido"}, status=400)
+            parser = MultiPartParser(request.META, request, request.upload_handlers, request.encoding)
+            data, files = parser.parse()
+        except Exception:
+            return JsonResponse({"error": "No se pudo procesar la petición multipart."}, status=400)
 
-        tipo_dispositivo = data.get("tipo_dispositivo")
-        id_dispositivo = data.get("id_dispositivo")
-        observaciones = data.get("observaciones")
-        portes = data.get("portes")
-        empresa_transporte = data.get("empresa_transporte")
-        estado = data.get("estado") 
+        tipo_dispositivo = data.get('tipo_dispositivo')
+        id_dispositivo = data.get('id_dispositivo')
+        observaciones = data.get('observaciones')
+        portes = data.get('portes')
+        empresa_transporte = data.get('empresa_transporte')
+        estado = data.get('estado')
+        delete_archivo = data.get('delete_archivo')
+        archivo = files.get('archivo')
+        usuario_asignado = data.get('usuario_asignado')
+        comentarios_taller = data.get('comentarios_taller')
 
-        print("hola")
+        if is_taller:
+            if comentarios_taller is None or comentarios_taller == "":
+                comentarios_taller = None
 
-        if is_propietario == True or is_encargado == True or is_admin == True:
-            # comprueba que el tipo de dispositivo exista en la clase Dispositivos
-            try:
-                tipo_dispositivo_obj = Dispositivo.objects.get(id = tipo_dispositivo)
-            except Dispositivo.DoesNotExist:
-                return JsonResponse({"error": "El dispositivo no existe"}, status = 400)
-            
-            ticket.tipo_dispositivo = tipo_dispositivo_obj
-            
+            ticket.comentarios_taller = comentarios_taller
 
-            # comprueba que el ID de dispositivo sea un número positivo
-            if int(id_dispositivo) <= 0:
-                return JsonResponse({"error": "ID de dispositivo inválido"}, status = 400)
-            
-            ticket.id_dispositivo = id_dispositivo
 
-            # comprueba que las observaciones no estén vacías
-            if observaciones == "":
-                return JsonResponse({"error": "Las observaciones no pueden estar vacías"}, status = 400)
-            ticket.observaciones = observaciones
+        if is_admin:
 
-            # comprueba que los portes sean o debidos o pagados
-            if portes != "debido" and portes != "pagado":
-                return JsonResponse({"error": "Portes inválidos"}, status = 400)
-            ticket.portes = portes
+            if usuario_asignado is None or usuario_asignado == "":
+                ticket.usuario_asignado = None
 
-            # comprueba que la empresa de transporte no esté vacía
-            if empresa_transporte == "":
-                return JsonResponse({"error": "La empresa de transporte está vacía"}, status = 400)
-            ticket.empresa_transporte = empresa_transporte
+            else: 
+                try:
+                    usuario_asignado_obj = Usuario.objects.get(id=usuario_asignado)
+                except Usuario.DoesNotExist:
+                    return JsonResponse({"error": "El usuario asignado no existe"}, status = 400)
+                
+                if usuario_asignado_obj.tipo_usuario != "taller" and usuario_asignado_obj.tipo_usuario != "admin":
+                    return JsonResponse({"error": "El usuario asignado tiene que ser de tipo taller o administrador"}, status = 400)
+
+                ticket.usuario_asignado = usuario_asignado_obj
+        # else:
+        #     return JsonResponse({"error": "No tienes permisos para asignarle a un usuario este ticket"}, status = 403)
+
+        if is_propietario or is_encargado or is_admin:
+            #si el tipo de dispositivo no es un numero:
+            if tipo_dispositivo and not tipo_dispositivo.isdigit():
+                return JsonResponse({"error": "El tipo de dispositivo no es válido"}, status = 400)
+
+            if tipo_dispositivo: 
+                try:
+                    ticket.tipo_dispositivo = Dispositivo.objects.get(id=tipo_dispositivo)
+                except Dispositivo.DoesNotExist:
+                    return JsonResponse({"error": "El dispositivo no existe"}, status=400)
+
+            if id_dispositivo is not None:
+                try:
+                    id_dispositivo_val = int(id_dispositivo)
+                    if id_dispositivo_val <= 0:
+                        raise ValueError
+                    ticket.id_dispositivo = id_dispositivo_val
+                except (TypeError, ValueError):
+                    return JsonResponse({"error": "ID de dispositivo inválido"}, status=400)
+
+            if observaciones is not None:
+                if observaciones.strip() == "":
+                    return JsonResponse({"error": "Las observaciones no pueden estar vacías"}, status=400)
+                ticket.observaciones = observaciones
+
+            if portes is not None:
+                if portes not in ["debido", "pagado"]:
+                    return JsonResponse({"error": "Portes inválidos"}, status=400)
+                ticket.portes = portes
+
+            if empresa_transporte is not None:
+                if empresa_transporte.strip() == "":
+                    return JsonResponse({"error": "La empresa de transporte está vacía"}, status=400)
+                ticket.empresa_transporte = empresa_transporte
+
+            if archivo:
+                ticket.archivo = archivo
+            elif delete_archivo:
+                ticket.archivo.delete(save=False)
+                ticket.archivo = None
 
         if is_taller or is_admin:
-
-            if estado == "no leido" or estado == "leido" or estado == "cerrado" or estado == "abierto":
+            if estado is not None:
+                if estado not in ["nuevo", "pendiente", "en progreso", "finalizado"]:
+                    return JsonResponse({"error": "El estado del ticket no es válido"}, status=400)
                 ticket.estado = estado
-            else: 
-                return JsonResponse ({"error": "El estado del ticket no es válido"}, status = 400)
-             
+
         ticket.save()
-        
         return JsonResponse({"success": True}, status=200)
 
     else:
@@ -477,9 +529,10 @@ def ticket_pdf(request, ticket_id):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
     from io import BytesIO
     from django.http import HttpResponse
+
     
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
@@ -487,19 +540,47 @@ def ticket_pdf(request, ticket_id):
     
     try:
         ticket = Ticket.objects.get(id=ticket_id)
-        if ticket.idUsuario != authenticated_user and not authenticated_user.admin:
-            return JsonResponse({"error": "No tienes permiso para descargar este ticket"}, status=403)
     except Ticket.DoesNotExist:
         return JsonResponse({"error": "Ticket no encontrado"}, status=404)
     except Exception as e:
         return JsonResponse({"error": f"Error al acceder al ticket: {str(e)}"}, status=500)
+
+    is_encargado = False
+    is_admin = False
+    is_taller = False
+    is_propietario = False
     
+
+    # compruebo que el usuario autenticado es el encargado de SU empresa
+    if str(authenticated_user.empresa.encargado) == str(authenticated_user.username):
+        
+        if str(ticket.idUsuario.empresa.encargado) == str(authenticated_user.username):
+            is_encargado = True
+     
+    
+    if authenticated_user.tipo_usuario == "admin":
+        is_admin = True
+
+    if authenticated_user.tipo_usuario == "taller":
+        is_taller = True
+    
+
+    if ticket.idUsuario == authenticated_user:
+        is_propietario = True
+    
+    # para que solo pueda imprimir tickets los administradores y el propietario del ticket
+    if is_propietario == False and is_admin == False and is_encargado == False and is_taller == False:
+            return JsonResponse({"error": "No tienes permiso para descargar este ticket"}, status=403)
+
     try:
         # Crear buffer para PDF
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=20, bottomMargin=20)
         story = []
         styles = getSampleStyleSheet()
+        from django.conf import settings
+        from reportlab.lib.utils import ImageReader
+        import os
         
         # Estilos personalizados
         title_style = ParagraphStyle(
@@ -511,10 +592,40 @@ def ticket_pdf(request, ticket_id):
             alignment=1,
             fontName='Helvetica-Bold'
         )
+
+        company_style = ParagraphStyle(
+            'CompanyInfo',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=colors.HexColor('#2d3e5f'),
+            spaceAfter=2,
+            fontName='Helvetica'
+        )
+
+        # Datos fijos de la empresa creadora de la web
+        logo_path = os.path.join(settings.BASE_DIR, 'app', 'static', 'img', 'sistemas olton.png')
+        company_name = 'Sistemas Olton S.L.'
+        company_address = 'Rúa Linneo, 9, Santa Cristina, Oleiros, La Coruña'
+        company_nif = 'B-15.166.663'
+        company_phone = '981 63 83 84'
+        company_mail = 'reparaciones@olton.es'
+
+        if os.path.exists(logo_path):
+            story.append(Image(logo_path, width=120, height=60, kind='proportional'))
+            story.append(Spacer(1, 8))
+
+        story.append(Paragraph(f'<b>{company_name}</b>', company_style))
+        story.append(Paragraph(company_address, company_style))
+        story.append(Paragraph(f'NIF: {company_nif}', company_style))
+        story.append(Paragraph(f'Teléfono: {company_phone}', company_style))
+        story.append(Paragraph(f'Correo: {company_mail}', company_style))
+        story.append(Spacer(1, 12))
         
         # Encabezado
         story.append(Paragraph(f'Detalle del Ticket #{ticket.id}', title_style))
         story.append(Spacer(1, 12))
+
+        
         
         # Preparar datos del ticket con valores seguros
         empresa_nombre = ticket.idUsuario.empresa.nombre if (ticket.idUsuario and ticket.idUsuario.empresa) else 'N/A'
@@ -694,10 +805,13 @@ def datos_usuario(request):
     if request.method == "GET":
 
         tipo_usuario = authenticated_user.tipo_usuario
+
+        empresas = Empresa.objects.all()
         
         return render(request, 'perfil/datos_usuario.html', {
             'user': authenticated_user,
-            'tipo_usuario': tipo_usuario
+            'tipo_usuario': tipo_usuario,
+            'empresas': empresas,
         })
     
     else:
@@ -804,10 +918,12 @@ def datos_empresa(request):
         encargado_username = data.get("encargado")
         correo = data.get("correo")
 
-        if nombre is not None:
+        if nombre is not None and nombre != "" and nombre != "None":
             empresa_obj.nombre = nombre
+        else:
+            return JsonResponse ({"error": "El nombre de la empresa no es válido"}, status = 400)
 
-        if correo is not None and correo != "":
+        if correo is not None and correo != "" and correo != "None":
             if Empresa.objects.filter(correo = correo).exclude(id = empresa_obj.id).exists():
                 return JsonResponse({"error": "El correo electrónico ya está en uso"})
             empresa_obj.correo = correo
@@ -815,7 +931,7 @@ def datos_empresa(request):
         else:
             empresa_obj.correo = None
 
-        if encargado_username is not None and encargado_username != "":
+        if encargado_username is not None and encargado_username != "" and encargado_username != "None":
             try:
                 nuevo_encargado = Usuario.objects.get(username=encargado_username, empresa=empresa_obj)
                 
@@ -869,7 +985,7 @@ def tickets_empresa(request):
                 tickets = tickets.filter(id_dispositivo__icontains=filtros['id_dispositivo'])
 
         if filtros['tipo_dispositivo']:
-            tickets = tickets.filter(tipo_dispositivo=filtros['tipo_dispositivo'])
+            tickets = tickets.filter(tipo_dispositivo__nombre=filtros['tipo_dispositivo'])
 
         if filtros['estado']:
             tickets = tickets.filter(estado=filtros['estado'])
@@ -881,8 +997,11 @@ def tickets_empresa(request):
             except ValueError:
                 pass
 
+        usuarios_empresa = Usuario.objects.filter(empresa__nombre = authenticated_user.empresa.nombre)
+
         return render(request, 'encargado/tickets_empresa.html', {
             'user': authenticated_user,
+            'usuarios_empresa': usuarios_empresa,
             'tickets': tickets,
             'filtros': filtros,
             'dispositivos': dispositivos,
@@ -924,12 +1043,71 @@ def taller (request):
     
     if request.method == "GET":
 
-
         return render (request, "taller/menu_taller.html")
 
     else:
         return JsonResponse({"message": "Método no permitido"}, status=405)
 
+
+def tickets_asignados (request):
+
+    authenticated_user = __get_request_user(request)
+
+    if authenticated_user is None:
+        return HttpResponseRedirect('/login/')
+    
+    if authenticated_user.tipo_usuario != "taller":
+        return render(request, 'error.html')
+
+
+    if request.method == 'GET':
+
+        tickets = Ticket.objects.filter(usuario_asignado = authenticated_user)
+        dispositivos = Dispositivo.objects.all()
+
+        filtros = {
+            'usuario': request.GET.get('usuario', '').strip(),
+            'id_dispositivo': request.GET.get('id_dispositivo', '').strip(),
+            'tipo_dispositivo': request.GET.get('tipo_dispositivo', '').strip(),
+            'estado': request.GET.get('estado', '').strip(),
+            'fecha': request.GET.get('fecha', '').strip(),
+        }
+
+        if filtros['usuario']:
+            tickets = tickets.filter(idUsuario__username__icontains=filtros['usuario'])
+
+        if filtros['id_dispositivo']:
+            if filtros['id_dispositivo'].isdigit():
+                tickets = tickets.filter(id_dispositivo=int(filtros['id_dispositivo']))
+            else:
+                tickets = tickets.filter(id_dispositivo__icontains=filtros['id_dispositivo'])
+
+        if filtros['tipo_dispositivo']:
+            tickets = tickets.filter(tipo_dispositivo__nombre=filtros['tipo_dispositivo'])
+
+        if filtros['estado']:
+            tickets = tickets.filter(estado=filtros['estado'])
+
+        if filtros['fecha']:
+            try:
+                fecha_obj = datetime.fromisoformat(filtros['fecha']).date()
+                tickets = tickets.filter(fecha_creacion__date=fecha_obj)
+            except ValueError:
+                pass
+
+        usuarios_empresa = Usuario.objects.filter(empresa__nombre = authenticated_user.empresa.nombre)
+
+        return render(request, 'taller/tickets_asignados.html', {
+            'user': authenticated_user,
+            'usuarios_empresa': usuarios_empresa,
+            'tickets': tickets,
+            'filtros': filtros,
+            'dispositivos': dispositivos,
+            'estado_choices': Ticket.ESTADO_TICKET_CHOICES,
+        })
+        
+    else:
+        return JsonResponse({"message": "Método no permitido"}, status=405)
 
 #MÉTODOS PARA ADMINISTRADORES
 def administrador(request):
@@ -993,7 +1171,7 @@ def gestion_tickets(request):
                 tickets = tickets.filter(id_dispositivo__icontains=filtros['id_dispositivo'])
 
         if filtros['tipo_dispositivo']:
-            tickets = tickets.filter(tipo_dispositivo=filtros['tipo_dispositivo'])
+            tickets = tickets.filter(tipo_dispositivo__nombre=filtros['tipo_dispositivo'])
 
         if filtros['estado']:
             tickets = tickets.filter(estado=filtros['estado'])
@@ -1091,7 +1269,7 @@ def empresa_id (request, empresa_id):
 
         # COMPROBACIONES
         if nombre == "" or nombre == "None":
-            nombre = empresa.nombre
+            return JsonResponse({"error": "El nombre de la empresa no puede estar vacío"}, status = 400)
 
         # que el nombre no esté ya en uso
         if nombre and Empresa.objects.filter(nombre = nombre).exclude(id = empresa.id).exists():
@@ -1172,12 +1350,13 @@ def crear_empresa(request):
         if correo == "":
             correo = None
 
+        if nombre == "":
+            return JsonResponse({"error": "El nombre de la empresa no puede estar vacío"}, status=400)
+
         try:
             # Verificar si el usuario ya existe
             if Empresa.objects.filter(nombre=nombre).exists():
-                return render(request, 'admin/crear_empresa.html', {
-                    'error': 'El nombre de empresa ya existe'
-                })
+                return JsonResponse({'error': 'El nombre de empresa ya existe'}, status=400)
 
 
             empresa = Empresa.objects.create(
@@ -1202,7 +1381,8 @@ def gestion_usuarios(request):
     authenticated_user = __get_request_user(request)
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
-    if authenticated_user.tipo_usuario == 'Admin':
+    
+    if authenticated_user.tipo_usuario != 'admin' and authenticated_user.tipo_usuario != "taller":
         return render (request, "error.html")
     
     if request.method == "GET":
@@ -1222,35 +1402,50 @@ def usuario_id(request, usuario_id):
     if authenticated_user is None:
         return HttpResponseRedirect('/login/')
 
-    es_encargado = str(authenticated_user.empresa.encargado) == str(authenticated_user.username)
+    # coge el usuario
+    try:
+        usuario = Usuario.objects.get(id=usuario_id)
+    except Usuario.DoesNotExist:
+        return render(request, 'perfil/perfil.html', {'error': 'El usuario no existe'})
 
-    if authenticated_user.tipo_usuario != "admin" and es_encargado == True and authenticated_user.tipo_usuario != "taller":
+    es_admin = False
+    es_taller = False
+    es_encargado = False
+
+    if authenticated_user.tipo_usuario == "admin":
+        es_admin = True
+    elif authenticated_user.tipo_usuario == "taller":
+        es_taller = True
+
+    if str(authenticated_user.empresa.encargado) == str(authenticated_user.username):
+        if usuario.empresa == authenticated_user.empresa:
+            es_encargado = True
+            
+    # print("admin: ", es_admin, ". taller: ", es_taller, ". encargado: ", es_encargado)
+
+    if es_admin != True and es_encargado != True and es_taller != True:
         return render (request, "error.html")
     
         
     if request.method == "GET":
         
-        try:
-            usuario = Usuario.objects.get(id=usuario_id)
-        except Usuario.DoesNotExist:
-            return render(request, 'usuario.html', {'error': 'El usuario no existe'})
-        
-        if authenticated_user.tipo_usuario != "admin":
-            if es_encargado != True and authenticated_user.tipo_usuario != "taller":
+        if es_admin == True:
+            if es_encargado != True and es_taller == True:
                 return render(request, 'error.html', {'error': 'No tienes permiso para ver este usuario'})
-        
+
         empresas = Empresa.objects.all()
         
         return render(request, 'admin/usuario_id.html', {
+            'usuario_registrado': authenticated_user,
             'user': usuario,
             'empresas': empresas
-            })
+        })
 
     if request.method == "DELETE":
-        try:
-            usuario = Usuario.objects.get(id=usuario_id)
-        except Usuario.DoesNotExist:
-            return JsonResponse({"error": "El usuario no existe"}, status=404)
+
+        if es_taller == True and es_encargado == False:
+            return JsonResponse({'error': 'No tienes permiso para eliminar este usuario'}, status = 403) 
+
 
         if usuario.id == authenticated_user.id:
             return JsonResponse({"error": "No puedes eliminar tu propio usuario"}, status=400)
@@ -1262,6 +1457,9 @@ def usuario_id(request, usuario_id):
             return JsonResponse({"error": str(e)}, status=400)
 
     if request.method == "PUT":
+        if es_admin != True and es_encargado != True:
+            return JsonResponse({'error': 'No tienes permiso para editar este usuario'}, status = 403)
+
         try:
             data = json.loads(request.body)
         except ValueError:
@@ -1276,7 +1474,20 @@ def usuario_id(request, usuario_id):
         nombre = data.get("nombre")
         empresa = data.get("empresa")
         correo = data.get("correo")
-        tipo_usuario = data.get("tipo_usuario")
+
+        if es_admin == True:
+            tipo_usuario = data.get("tipo_usuario")
+
+            if tipo_usuario == "" or tipo_usuario == None: 
+                tipo_usuario = usuario.tipo_usuario
+
+            if tipo_usuario not in ["admin", "taller", "cliente"]:
+                return JsonResponse({"error": "El tipo de usuario no es válido"}, status = 400)
+        
+            usuario.tipo_usuario = tipo_usuario
+
+        if es_encargado == True and es_admin == False:
+            empresa = usuario.empresa.id
 
         if username == "" or correo == "" or nombre == "" or empresa == "":
             return JsonResponse({"error": "Los campos no pueden estar vacíos"}, status=400)
@@ -1294,13 +1505,15 @@ def usuario_id(request, usuario_id):
         if nombre is not None:
             usuario.nombre = nombre
 
-        if empresa is not None:
-            empresa_obj = Empresa.objects.get(id = empresa)
+        
+        if es_admin:
+            if empresa is not None:
+                empresa_obj = Empresa.objects.get(id = empresa)
 
-        usuario.empresa=empresa_obj
+            usuario.empresa=empresa_obj
+        else:
+            empresa = usuario.empresa
 
-
-        usuario.tipo_usuario = tipo_usuario
 
         try:
             usuario.save()
@@ -1412,6 +1625,9 @@ def crear_usuario_admin (request):
         empresa_nombre = request.POST.get("empresa")
         correo = request.POST.get("correo")
         tipo_usuario = request.POST.get("tipo_usuario")
+
+        if tipo_usuario is None or tipo_usuario == "":
+            tipo_usuario = "cliente"
 
         is_admin = False
         if authenticated_user.tipo_usuario == "admin":
@@ -1576,7 +1792,7 @@ def dispositivo_id (request, dispositivo_id):
         nombre = data.get("nombre")
 
         # comprueba que el campo nombre no pueda estar vacío
-        if nombre == "":
+        if nombre == "" or nombre == "None":
           return JsonResponse({"error": "El nombre no puede estar vacio o nulo"}, status = 409)
 
         # comprueba que el nombre de dispositivo no esté en uso
@@ -1597,6 +1813,8 @@ def dispositivo_id (request, dispositivo_id):
 
 
     if request.method == "DELETE":
+        if authenticated_user.tipo_usuario != "admin":
+            return JsonResponse({"error": "No tienes permisos para eliminar este dispositivo"}, status = 403)
 
         try:
             dispositivo.delete()

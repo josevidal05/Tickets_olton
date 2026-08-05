@@ -15,8 +15,10 @@
 
 <div class="titulo">
     <h1>Gestión de usuarios</h1>
-    <button type="button" class="btn-inicio" onclick="window.location.href='/crear_usuario/';">Crear nuevo usuario</button>
 
+    {% if is_admin == True or is_encargado == True%}
+    <button type="button" class="btn-inicio" onclick="window.location.href='/crear_usuario/';">Crear nuevo usuario</button>
+    {% endif %}
 </div>
 
 <!-- 
@@ -64,7 +66,7 @@
 </div>
 -->
 
-<div class="tabla_tickets">
+<div class="tabla">
     <table>
         <tr class="cabecera_tabla">
             <th>ID</th>

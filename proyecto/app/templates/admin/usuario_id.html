@@ -10,10 +10,14 @@
 {% endblock %}
 
 {% block content %}
-<h1>Datos de usuario #{{ user.id }}</h1>
+<h1>Datos de {{ user.username }}</h1>
 
 <div class="datos">
     {% csrf_token %}
+    <div class="id">
+        <p>Id:</p>
+        <p>{{ user.id }}</p>
+    </div>
 
     <div class="username">
         <p>Nombre de usuario:</p>
@@ -30,11 +34,16 @@
     <div class="empresa">
         <p>Empresa:</p>
         <p>{{ user.empresa }}</p>
+        {% if is_admin %}
         <select name="empresa" required hidden>
             {% for empresa in empresas %}
             <option value="{{ empresa.id }}" {% if user.empresa and empresa.id == user.empresa.id %}selected{% endif %}>{{ empresa.nombre }}</option>
             {% endfor %}
         </select>
+        {% else %}
+        <input type="text" name="empresa" value="{{ user.empresa }}" readonly required hidden>
+        {% endif %}
+
     </div>
 
     <div class="correo"> 
@@ -46,11 +55,16 @@
     <div class="tipo_usuario"> 
         <p>Tipo de usuario:</p>
         <p>{{ user.tipo_usuario }}</p>
+
+        {% if usuario_registrado.tipo_usuario == "admin"  %}
         <select value="{{ user.tipo_usuario }}" name="tipo_usuario" required hidden>
             <option value="cliente" {% if user.tipo_usuario == 'cliente' %}selected{% endif %}>Cliente</option>
             <option value="taller" {% if user.tipo_usuario == 'taller' %}selected{% endif %}>Taller</option>
             <option value="admin" {% if user.tipo_usuario == 'admin' or user.tipo_usuario == 'Admin' %}selected{% endif %}>Administrador</option>
         </select>
+        {% else %}
+        <p id="tipo_usuario_edit" name="tipo_usuario" required hidden>{{ user.tipo_usuario }}</p>
+        {% endif %}
     </div>
 
     {% if is_admin %}
@@ -61,10 +75,10 @@
 
     <a href="/gestion_usuarios/" class="volver">Volver</a>
 
-    {% if is_admin %}
+
+    {% if is_admin == True or is_encargado == True %}
     <a href="#" class="editar">Editar</a>
-    
-    <a href="#" class="eliminar">Eliminar empresa</a>
+    <a href="#" class="eliminar">Eliminar usuario</a>
 
     {% endif %}
     
@@ -118,12 +132,20 @@ function setEditingMode(editing) {
         const text = container.querySelector('p:nth-child(2)');
         const input = container.querySelector('input');
         const select = container.querySelector('select');
+        const noadmin = document.getElementById('tipo_usuario_edit')
 
         if (text) text.style.display = editing ? 'none' : 'block';
+
+        if (noadmin){
+            noadmin.hidden = !editing;
+            noadmin.style.display = editing ? 'block' : 'none';
+        } 
+
         if (input) {
             input.hidden = !editing;
             input.style.display = editing ? 'block' : 'none';
         }
+
         if (select) {
             select.hidden = !editing;
             select.style.display = editing ? 'block' : 'none';

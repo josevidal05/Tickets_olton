@@ -28,7 +28,13 @@
     <div class="empresa">
         <p>Empresa:</p>
         <p>{{ user.empresa }}</p>
-        <input type="text" name="empresa" value="{{ user.empresa }}" required hidden>
+        <!-- <input type="text" name="empresa" value="{{ user.empresa }}" required hidden> -->
+        <select value="{{ user.empresa.nombre }}" name="empresa" required hidden>
+            {% for empresa in empresas %}
+            <option value="{{ empresa.nombre }}" {% if user.empresa == empresa %}selected{% endif %}>{{ empresa.nombre }}</option>
+            {% endfor %}
+        </select>
+        
     </div>
 
     <div class="correo"> 
@@ -70,7 +76,7 @@ const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]
 const originalData = {
     username: getInputValue('input[name="username"]'),
     nombre: getInputValue('input[name="nombre"]'),
-    empresa: getInputValue('input[name="empresa"]'),
+    empresa: getSelectValue('select[name="empresa"]'),
     correo: getInputValue('input[name="correo"]'),
     tipo_usuario: getSelectValue('select[name="tipo_usuario"]')
 };
@@ -88,13 +94,13 @@ function getSelectValue(selector) {
 function restoreOriginalValues() {
     const usernameInput = datosUsuarioDiv.querySelector('input[name="username"]');
     const nombreInput = datosUsuarioDiv.querySelector('input[name="nombre"]');
-    const empresaInput = datosUsuarioDiv.querySelector('input[name="empresa"]');
+    const empresaSelect = datosUsuarioDiv.querySelector('select[name="empresa"]');
     const correoInput = datosUsuarioDiv.querySelector('input[name="correo"]');
     const tipo_usuarioSelect = datosUsuarioDiv.querySelector('select[name="tipo_usuario"]')
 
     if (usernameInput) usernameInput.value = originalData.username;
     if (nombreInput) nombreInput.value = originalData.nombre;
-    if (empresaInput) empresaInput.value = originalData.empresa;
+    if (empresaSelect) empresaSelect.value = originalData.empresa;
     if (correoInput) correoInput.value = originalData.correo;
     if (tipo_usuarioSelect) tipo_usuarioSelect.value = originalData.tipo_usuario;
 }
@@ -175,7 +181,7 @@ async function guardarCambios() {
 
     const username = getInputValue('input[name="username"]');
     const nombre = getInputValue('input[name="nombre"]');
-    const empresa = getInputValue('input[name="empresa"]');
+    const empresa = getSelectValue('select[name="empresa"]');
     const correo = getInputValue('input[name="correo"]');
     const password = getInputValue('input[name="password"]');
     const confirmPassword = getInputValue('input[name="confirm_password"]');

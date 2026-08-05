@@ -22,12 +22,6 @@
 {% block content %}
 
 
-{% if error %}
-<p style="color: red;">{{ error }}</p>
-{% else %}
-
-
-
 <div class="container">
 
     <h2>Detalle del Ticket #{{ ticket.id }}</h2>
@@ -120,9 +114,11 @@
                     style="display:none; margin-top: .5rem;">
 
                 {% if ticket.archivo != None %}
-                <div>
-                    <input type="checkbox" style="display: none;">
-                    <p style="display: none;">Eliminar la imagen del ticket</p>
+                <div id="archivo-delete-edit" style="display:none; margin-top: .5rem;">
+                    <label>
+                        <input type="checkbox" id="delete-archivo" name="delete_archivo" value="1">
+                        Eliminar el archivo actual
+                    </label>
                 </div>
 
                 {% endif %}
@@ -178,16 +174,48 @@
                 <span id="estado-display">{{ ticket.estado }}</span>
                 {% if is_admin or is_taller %}
                 <select id="estado-edit" name="estado" style="display:none;">
-                    <option value="no leido" {% if ticket.estado == 'no leido' %}selected{% endif %}>No leído</option>
-                    <option value="leido" {% if ticket.estado == 'leido' %}selected{% endif %}>Leído</option>
-                    <option value="abierto" {% if ticket.estado == 'abierto' %}selected{% endif %}>Abierto</option>
-                    <option value="cerrado" {% if ticket.estado == 'cerrado' %}selected{% endif %}>Cerrado</option>
+                    <option value="nuevo" {% if ticket.estado == 'nuevo' %}selected{% endif %}>Nuevo</option>
+                    <option value="pendiente" {% if ticket.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="en progreso" {% if ticket.estado == 'en progreso' %}selected{% endif %}>En progreso</option>
+                    <option value="finalizado" {% if ticket.estado == 'finalizado' %}selected{% endif %}>Finalizado</option>
                 </select>
                 {% else %}
                 <span id="estado-edit" style="display: none;">{{ ticket.estado }}</span>
                 {% endif %}
             </div>
         </div>
+
+        <div class="form-group">
+            <label>Usuario asignado</label>
+            <div class="form-field">
+                {% if ticket.usuario_asignado %}
+                <span id="usuario_asignado-display">{{ ticket.usuario_asignado.username }}</span>
+                {% else %}
+                <span id="usuario_asignado-display">No asignado</span>
+                {% endif %}
+                {% if is_admin %}
+                <select id="usuario_asignado-edit" name="usuario_asignado" style="display:none;">
+                    <option value="">No asignado</option>
+                    {% for usuario in usuarios_taller %}
+                    <option value="{{ usuario.id }}" {% if ticket.usuario_asignado and ticket.usuario_asignado.id == usuario.id %}selected{% endif %}>{{ usuario.username }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <p id="usuario_asignado-edit" name="usuario_asignado" style="display:none;">{{ ticket.usuario_asignado.username }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if is_taller %}
+        <div class="form-group">
+            <label>Comentarios de taller:</label>
+
+            <div class="form-field">
+                <span id="comentarios_taller-display">{{ ticket.comentarios_taller }}</span>
+                <textarea id="comentarios_taller-edit" name="comentarios_taller" style="display:none;">{{ ticket.comentarios_taller }}</textarea>
+            </div>
+        </div>
+        {% endif %}
 
         <div class="form-group">
             <label>Fecha de creación</label>
@@ -197,17 +225,20 @@
 
     <div class="botones">
         <button id="edit-btn">Editar</button>
-        <button id="save-btn" style="display:none;">Guardar Cambios</button>
-        <button id="cancel-btn" style="display:none;">Cancelar</button>
-        <button id="imprimir-ticket">Imprimir Ticket</button>
+        <button id="save-btn" type="button" style="display:none;">Guardar Cambios</button>
+        <button id="cancel-btn" type="button" style="display:none;">Cancelar</button>
+        <button id="imprimir-ticket" type="button">Imprimir Ticket</button>
 
+        {% if is_admin != False or is_propietario != False or is_encargado != False %}
         <button id="delete-btn">Eliminar Ticket</button>
+        {% endif %}
+
         <button id="volver-btn">Volver</button>
 
-    </div>
+    </div> 
 
 
-    {% endif %}
+    
 </div>
 
 <script>
@@ -267,87 +298,130 @@
 
         const volverBtn = document.getElementById('volver-btn');
 
-        editBtn.addEventListener('click', () => setEditMode(true));
+        if (editBtn) {
+            editBtn.addEventListener('click', () => setEditMode(true));
+        }
 
-        cancelBtn.addEventListener('click', () => setEditMode(false));
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => setEditMode(false));
+        }
 
-        volverBtn.addEventListener('click', () => {
-            window.history.back();
-        });
+        if (volverBtn) {
+            volverBtn.addEventListener('click', () => {
+                window.history.back();
+            });
+        }
+    
+        const fileInput = document.getElementById('archivo-edit');
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        const isFileInput = fileInput instanceof HTMLInputElement && fileInput.type === 'file';
 
-        saveBtn.addEventListener('click', async () => {
-            try {
-                const payload = {
-                    tipo_dispositivo: document.getElementById('tipo_dispositivo-edit').value,
-                    id_dispositivo: document.getElementById('id_dispositivo-edit').value,
-                    observaciones: document.getElementById('observaciones-edit').value,
-                    portes: document.getElementById('portes-edit').value,
-                    empresa_transporte: document.getElementById('empresa_transporte-edit').value,
-                    estado: document.getElementById('estado-edit').value,
-                };
+        const validFile = file => {
+            if (!file) return true;
+            const extension = file.name.split('.').pop().toLowerCase();
+            return allowedExtensions.includes(extension);
+        };
 
-                const result = await sendRequest('PUT', JSON.stringify(payload));
-                if (!result.success) {
-                    throw new Error(result.error || 'Error al actualizar el ticket.');
-                }
-                showAlert('Ticket actualizado correctamente.');
-                location.reload();
-            } catch (error) {
-                showAlert(error.message, true);
-            }
-        });
 
-        deleteBtn.addEventListener('click', async () => {
-            if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
-                return;
-            }
+        if (saveBtn) {
+            saveBtn.addEventListener('click', async (event) => {
+                event.preventDefault();
 
-            try {
-                const result = await sendRequest('DELETE');
-                if (!result.success) {
-                    throw new Error(result.error || 'Error al eliminar el ticket.');
-                }
-                showAlert('Ticket eliminado correctamente.');
-                window.location.href = '/perfil/';
-            } catch (error) {
-                showAlert(error.message, true);
-            }
-        });
+                const file = isFileInput && fileInput.files.length > 0 ? fileInput.files[0] : null;
 
-        imprimirBtn.addEventListener('click', async () => {
-            try {
-                const ticketId = document.getElementById('id').textContent.trim();
-                const response = await fetch(`/ticket/${ticketId}/pdf/`, {
-                    method: 'GET',
-                    headers: { 'X-CSRFToken': csrfToken },
-                    credentials: 'same-origin'
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-                    throw new Error(errorData.error || `HTTP ${response.status}: Error al generar el PDF`);
+                if (file && !validFile(file)) {
+                    showAlert('Formato de archivo inválido. Usa jpg, png, gif, bmp o webp.', true);
+                    return;
                 }
 
-                const blob = await response.blob();
+                try {
+                    const formData = new FormData(form);
+                    if (file) {
+                        formData.set('archivo', file);
+                    }
 
-                // Verificar que el blob sea válido
-                if (blob.size === 0) {
-                    throw new Error('El archivo PDF está vacío.');
+                    const response = await fetch(window.location.href, {
+                        method: 'PUT',
+                        headers: { 'X-CSRFToken': csrfToken },
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+
+                    const text = await response.text();
+                    let result;
+                    try {
+                        result = JSON.parse(text);
+                    } catch (error) {
+                        throw new Error(`Respuesta inválida del servidor (${response.status}): ${text}`);
+                    }
+
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error || 'Error al actualizar el ticket.');
+                    }
+
+                    showAlert('Ticket actualizado correctamente.');
+                    location.reload();
+                } catch (error) {
+                    showAlert(error.message, true);
+                }
+            });
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async () => {
+                if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
+                    return;
                 }
 
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `ticket_${ticketId}.pdf`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-                showAlert('Ticket descargado correctamente.');
-            } catch (error) {
-                showAlert(`Error al descargar el PDF: ${error.message}`, true);
-            }
-        });
+                try {
+                    const result = await sendRequest('DELETE');
+                    if (!result.success) {
+                        throw new Error(result.error || 'Error al eliminar el ticket.');
+                    }
+                    showAlert('Ticket eliminado correctamente.');
+                    window.location.href = '/perfil/';
+                } catch (error) {
+                    showAlert(error.message, true);
+                }
+            });
+        }
+
+        if (imprimirBtn) {
+            imprimirBtn.addEventListener('click', async () => {
+                try {
+                    const ticketId = document.getElementById('id').textContent.trim();
+                    const response = await fetch(`/ticket/${ticketId}/pdf/`, {
+                        method: 'GET',
+                        headers: { 'X-CSRFToken': csrfToken },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+                        throw new Error(errorData.error || `HTTP ${response.status}: Error al generar el PDF`);
+                    }
+
+                    const blob = await response.blob();
+
+                    if (blob.size === 0) {
+                        throw new Error('El archivo PDF está vacío.');
+                    }
+
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+
+                    link.href = url;
+                    link.download = `ticket_${ticketId}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    showAlert('Ticket descargado correctamente.');
+                } catch (error) {
+                    showAlert(`Error al descargar el PDF: ${error.message}`, true);
+                }
+            });
+        }
     });
 </script>
 

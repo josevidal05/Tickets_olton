@@ -35,6 +35,16 @@
         </div>
     </a>
 
+    {% if is_taller %}
+    <a href="/tickets_asignados/" style="margin-top:20px;">
+        <div class="contenido_a">
+            <p>Tickets asignados</p>
+            <p>></p>
+        </div>
+    </a>
+    {% endif %}
+    
+
     {% if is_encargado %}
     <a href="/datos_empresa/" class="mi_empresa">
         <div class="contenido_a">

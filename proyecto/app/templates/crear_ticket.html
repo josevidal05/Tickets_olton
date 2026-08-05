@@ -4,7 +4,7 @@
 
 {% block title %}Tickets{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/crear_ticket.css' %}">
 
 {% endblock %}
 
@@ -16,7 +16,7 @@
 
 </div>
 
-<form method="POST" action="/">
+<form method="POST" action="/crear_ticket/">
 
     <div class="empresa">
         <p>Empresa:</p>
@@ -69,12 +69,28 @@
     <button id="enviar-ticket" type="submit">Enviar Ticket</button>
 </form>
 
+<div id="success-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:10000;">
+    <div style="background:white; border-radius:12px; width:min(92%,420px); padding:24px; box-shadow:0 20px 60px rgba(0,0,0,0.18);">
+        <h2 style="margin-top:0; font-size:1.25rem;">Ticket creado</h2>
+        <p id="success-modal-message" style="margin:1rem 0 1.5rem; line-height:1.5;"></p>
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end; flex-wrap:wrap;">
+            <button id="success-modal-close" type="button" style="padding:0.75rem 1rem; border:none; border-radius:8px; background:#666; color:white; cursor:pointer;">Aceptar</button>
+            <button id="success-modal-print" type="button" style="padding:0.75rem 1rem; border:none; border-radius:8px; background:#0069d9; color:white; cursor:pointer;">Imprimir ticket</button>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('form');
     const fileInput = form.querySelector('input[name="archivo"]');
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-    const enviarButton = document.getElementById('enviar-ticket')
+    const enviarButton = document.getElementById('enviar-ticket');
+    const modal = document.getElementById('success-modal');
+    const modalMessage = document.getElementById('success-modal-message');
+    const modalClose = document.getElementById('success-modal-close');
+    const modalPrint = document.getElementById('success-modal-print');
+    let createdTicketId = null;
 
     const validFile = file => {
         if (!file) return true;
@@ -86,7 +102,70 @@ document.addEventListener('DOMContentLoaded', () => {
         window.alert(message);
         console.error(message);
     };
-    
+
+    const closeModal = () => {
+        if (!modal) return;
+        modal.style.display = 'none';
+        if (createdTicketId) {
+            form.reset();
+            createdTicketId = null;
+        }
+    };
+
+    const openModal = message => {
+        if (!modal) return;
+        modalMessage.textContent = message;
+        modal.style.display = 'flex';
+    };
+
+    if (modalClose) {
+        modalClose.addEventListener('click', closeModal);
+    }
+
+    if (modal) {
+        modal.addEventListener('click', event => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    }
+
+    if (modalPrint) {
+        modalPrint.addEventListener('click', async () => {
+            if (!createdTicketId) {
+                showError('No se ha podido obtener el ID del ticket para imprimir.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/ticket/${createdTicketId}/pdf/`, {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}: Error al generar el PDF`);
+                }
+
+                const blob = await response.blob();
+                if (blob.size === 0) {
+                    throw new Error('El archivo PDF está vacío.');
+                }
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `ticket_${createdTicketId}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                showError(`Error al descargar el PDF: ${error.message}`);
+            }
+        });
+    }
 
     form.addEventListener('submit', async function (event) {
         event.preventDefault();
@@ -120,9 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            window.alert(data.message);
-            window.location.href = "/";
-
+            createdTicketId = data.id || null;
+            openModal(data.message || 'Ticket creado correctamente.');
 
         } catch (error) {
             console.error('Error al crear el ticket:', error);

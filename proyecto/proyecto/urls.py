@@ -34,7 +34,7 @@ urlpatterns = [
     path("cambiar_contraseña/", views.contraseña, name='edit_password'),
 
     # urls de tickets
-    path('', views.crear_ticket, name='crear_ticket'),
+    path('crear_ticket/', views.crear_ticket, name='crear_ticket'),
     path('mis_tickets/', views.tickets_usuario),
     path("ticket/<int:ticket_id>/", views.ticket_id),
     path("ticket/<int:ticket_id>/pdf/", views.ticket_pdf),
@@ -64,6 +64,7 @@ urlpatterns = [
 
     # urls para taller
     path('menu_taller/', views.taller),
+    path('tickets_asignados/', views.tickets_asignados),
     
     # urls para admin
     path('admin/', admin.site.urls),

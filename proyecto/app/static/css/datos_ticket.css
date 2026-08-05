@@ -59,6 +59,10 @@ form {
     color: #222f48;
 }
 
+#delete-archivo{
+    width: auto;
+}
+
 .form-field textarea {
     min-height: 120px;
     resize: vertical;

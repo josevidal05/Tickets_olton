@@ -11,84 +11,99 @@
 {% block content %}
 
 
-    <div class="titulo">
-        <h1>Registrar usuario</h1>
-        <h4>Introduzca los datos</h4>
+<div class="titulo">
+    <h1>Registrar usuario</h1>
+    <h4>Introduzca los datos</h4>
+</div>
+
+
+<form method="POST" action="{% url 'registrar_usuario_admin' %}">
+    {% csrf_token %}
+
+    <div class="username">
+        <p>Nombre de usuario:</p>
+        <input type="text" name="username" required>
     </div>
 
+    <div class="nombre">
+        <p>Nombre:</p>
+        <input type="text" name="nombre" required>
+    </div>
 
-    <form method="POST" action="{% url 'registrar_usuario_admin' %}">
-        {% csrf_token %}
-
-        <div class="username">
-            <p>Nombre de usuario:</p>
-            <input type="text" name="username" required>
-        </div>
-
-        <div class="nombre">
-            <p>Nombre:</p>
-            <input type="text" name="nombre" required>
-        </div>
-
-        <div class="empresa">
-            <p>Empresa:</p>
-
-            {% if is_admin %}
-            <select name="empresa" required>
-                <option value="">Seleccione una empresa</option>
-                {% for empresa in empresas %}
-                <option value="{{ empresa }}">{{ empresa.nombre }}</option>
-                {% endfor %}
-            </select>
-
-            {% elif is_encargado %}
-            <input type="text" value="{{ user.empresa }}" name="empresa" required>
-            {% endif %}
-
-        </div>
-
-        <div class="correo"> 
-            <p>Correo electrónico:</p>
-            <input type="email" name="correo" required>
-        </div>
+    <div class="empresa">
+        <p>Empresa:</p>
 
         {% if is_admin %}
-        <div class="tipo_usuario">
-            <p>Tipo de usuario:</p>
-            <select name="tipo_usuario" required>
-                <option value="cliente">Cliente</option>
-                <option value="taller">Taller</option>
-                <option value="admin">Administrador</option>
-            </select>
-        </div>
+        <select name="empresa" required>
+            <option value="">Seleccione una empresa</option>
+            {% for empresa in empresas %}
+            <option value="{{ empresa }}">{{ empresa.nombre }}</option>
+            {% endfor %}
+        </select>
+
+        {% elif is_encargado %}
+        <input type="text" value="{{ user.empresa }}" name="empresa" readonly required>
         {% endif %}
 
-        <div class="password">
-            <p>Contraseña:</p>
-            <input type="password" name="password" required>
-        </div>
+    </div>
 
-        <div class="confirm_password">
-            <p>Confirmar contraseña:</p>
-            <input type="password" name="confirm_password" required>
+    <div class="correo"> 
+        <p>Correo electrónico:</p>
+        <input type="email" name="correo" required>
+    </div>
 
-        </div>
-
-        <button type="submit">Registrar usuario</button>
-
-    </form>
-    
-    
-    {% if error %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var msg = "{{ error|escapejs }}";
-                if (msg) {
-                    // Mostrar alerta sin interferir con el renderizado de la página
-                    alert(msg);
-                }
-            });
-        </script>
+    {% if is_admin %}
+    <div class="tipo_usuario">
+        <p>Tipo de usuario:</p>
+        <select name="tipo_usuario" required>
+            <option value="cliente">Cliente</option>
+            <option value="taller">Taller</option>
+            <option value="admin">Administrador</option>
+        </select>
+    </div>
     {% endif %}
 
-{% endblock %}
+    <div class="password">
+        <p>Contraseña:</p>
+        <input type="password" name="password" required>
+    </div>
+
+    <div class="confirm_password">
+        <p>Confirmar contraseña:</p>
+        <input type="password" name="confirm_password" required>
+
+    </div>
+
+    <button type="submit">Registrar usuario</button>
+
+    <button id="volver">Volver</button>
+
+</form>
+
+
+{% if error %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var msg = "{{ error|escapejs }}";
+            if (msg) {
+                // Mostrar alerta sin interferir con el renderizado de la página
+                alert(msg);
+            }
+            
+            });
+    </script>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const volverBtn = document.getElementById('volver');
+        
+        volverBtn.addEventListener('click', () => {
+            window.history.back();
+
+        });
+    });
+</script>
+
+{% endblock %}  

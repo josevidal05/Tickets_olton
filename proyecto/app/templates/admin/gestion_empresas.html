@@ -13,11 +13,16 @@
 
 {% block content %}
 
+
 <div class="titulo">
     <h1>Gestión de empresas</h1>
+    {% if is_admin == True %}
     <button type="button" class="btn-inicio" onclick="window.location.href='/crear_empresa/';">Crear nueva empresa</button>
+    {% endif %}
 </div>
 
+
+<!-- Filtros -->
 <!-- 
 <div class="filtros">
     <button type="button" class="filter-toggle" aria-expanded="false">Filtros ▾</button>
@@ -63,7 +68,7 @@
 </div>
 -->
 
-<div class="tabla_tickets">
+<div class="tabla">
     <table>
         <tr class="cabecera_tabla">
             <th>ID</th>
